@@ -1,5 +1,5 @@
 from circleshape import CircleShape
-from constants import PLAYER_RADIUS, LINE_WIDTH, PLAYER_TURN_SPEED, PLAYER_SPEED, PLAYER_SHOOT_SPEED, PLAYER_SHOOT_COOLDOWN_SECONDS
+from constants import PLAYER_RADIUS, LINE_WIDTH, PLAYER_TURN_SPEED, PLAYER_SHOOT_SPEED, PLAYER_SHOOT_COOLDOWN_SECONDS, PLAYER_ACCELERATION, PLAYER_MAX_SPEED, PLAYER_DRAG, PLAYER_REVERSE_ACCELERATION, PLAYER_MIN_VELOCITY
 import pygame
 from shot import Shot
 
@@ -28,12 +28,22 @@ class Player(CircleShape):
     def rotate(self, dt):
         self.rotation += PLAYER_TURN_SPEED * dt
 
+    def accelerate(self, amount, dt):
+        direction = pygame.Vector2(0, 1).rotate(self.rotation)
+        self.velocity += direction * amount * dt
+
+        if self.velocity.length() > PLAYER_MAX_SPEED:
+            self.velocity.scale_to_length(PLAYER_MAX_SPEED)
+
     def move(self, dt):
-        unit_vector = pygame.Vector2(0, 1)
-        rotated_vector = unit_vector.rotate(self.rotation)
-        rotated_with_speed_vector = rotated_vector * PLAYER_SPEED * dt
-        self.position += rotated_with_speed_vector
+        self.position += self.velocity * dt
         self.wrap_position()
+
+    def apply_drag(self):
+        self.velocity *= PLAYER_DRAG
+
+        if self.velocity.length() < PLAYER_MIN_VELOCITY:
+            self.velocity = pygame.Vector2(0, 0)
 
     def shoot(self):
         if self.shot_cooldown > 0:
@@ -57,8 +67,11 @@ class Player(CircleShape):
         if keys[pygame.K_d]:
             self.rotate(dt)
         if keys[pygame.K_w]:
-            self.move(dt)
+            self.accelerate(PLAYER_ACCELERATION, dt)
         if keys[pygame.K_s]:
-            self.move(-dt)
+            self.accelerate(-PLAYER_REVERSE_ACCELERATION, dt)
         if keys[pygame.K_SPACE]:
             self.shoot()
+        
+        self.apply_drag()
+        self.move(dt)
