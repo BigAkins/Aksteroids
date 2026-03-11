@@ -33,6 +33,7 @@ class Player(CircleShape):
         rotated_vector = unit_vector.rotate(self.rotation)
         rotated_with_speed_vector = rotated_vector * PLAYER_SPEED * dt
         self.position += rotated_with_speed_vector
+        self.wrap_position()
 
     def shoot(self):
         if self.shot_cooldown > 0:
