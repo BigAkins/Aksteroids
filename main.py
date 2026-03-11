@@ -1,7 +1,22 @@
 import pygame
 import sys
 from logger import log_state, log_event
-from constants import SCREEN_WIDTH, SCREEN_HEIGHT, SCORE_PER_AKSTEROID, SCORE_POSITION_X, SCORE_POSITION_Y, SCORE_FONT_SIZE, SCORE_COLOR, BACKGROUND_COLOR, BACKGROUND_IMAGE_PATH, USE_BACKGROUND_IMAGE
+from constants import (
+    SCREEN_WIDTH,
+    SCREEN_HEIGHT,
+    SCORE_PER_AKSTEROID,
+    SCORE_POSITION_X,
+    SCORE_POSITION_Y,
+    SCORE_FONT_SIZE,
+    SCORE_COLOR,
+    BACKGROUND_COLOR,
+    BACKGROUND_IMAGE_PATH,
+    USE_BACKGROUND_IMAGE,
+    PLAYER_STARTING_LIVES,
+    PLAYER_RESPAWN_INVULNERABILITY_SECONDS,
+    LIVES_POSITION_X,
+    LIVES_POSITION_Y,
+)
 from player import Player
 from aksteroidfield import AksteroidField
 from aksteroid import Aksteroid
@@ -10,6 +25,10 @@ from shot import Shot
 def draw_score(screen, font, score):
     score_surface = font.render(f"Score: {score}", True, SCORE_COLOR)
     screen.blit(score_surface, (SCORE_POSITION_X, SCORE_POSITION_Y))
+
+def draw_lives(screen, font, lives):
+    lives_surface = font.render(f"Lives: {lives}", True, SCORE_COLOR)
+    screen.blit(lives_surface, (LIVES_POSITION_X, LIVES_POSITION_Y))
 
 def load_background():
     if not USE_BACKGROUND_IMAGE:
@@ -27,8 +46,10 @@ def main():
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     clock = pygame.time.Clock()
-    score_font = pygame.font.Font(None, SCORE_FONT_SIZE)
+    hud_font = pygame.font.Font(None, SCORE_FONT_SIZE)
     score = 0
+    lives = PLAYER_STARTING_LIVES
+    respawn_invulnerability_timer = 0
     background = load_background()
     dt = 0
     print(f"Starting Aksteroids with pygame version: {pygame.version.ver}")
@@ -41,7 +62,7 @@ def main():
     AksteroidField.containers = (updatable,)
     Aksteroid.containers = (aksteroids, updatable, drawable)
     Shot.containers = (shots, updatable, drawable)
-    aksteroid_field = AksteroidField()
+    _aksteroid_field = AksteroidField()
 
     Player.containers = (updatable, drawable)
     player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
@@ -55,16 +76,28 @@ def main():
        
         if background is not None:
             screen.blit(background, (0, 0))
-        else: 
+        else:
             screen.fill(BACKGROUND_COLOR)
 
         updatable.update(dt)
 
+        if respawn_invulnerability_timer > 0:
+            respawn_invulnerability_timer -= dt
+            if respawn_invulnerability_timer < 0:
+                respawn_invulnerability_timer = 0
+
         for aksteroid in aksteroids:
-            if aksteroid.collides_with(player):
+            if respawn_invulnerability_timer <= 0 and aksteroid.collides_with(player):
                 log_event("player_hit")
-                print("Game over!")
-                sys.exit()
+                lives -= 1
+
+                if lives <= 0:
+                    print("Game over!")
+                    sys.exit()
+
+                player.reset()
+                respawn_invulnerability_timer = PLAYER_RESPAWN_INVULNERABILITY_SECONDS
+                break
 
         for aksteroid in aksteroids:
             for shot in shots:
@@ -78,7 +111,9 @@ def main():
         for obj in drawable:
             obj.draw(screen)
 
-        draw_score(screen, score_font, score)
+        draw_score(screen, hud_font, score)
+
+        draw_lives(screen, hud_font, lives)
 
         pygame.display.flip()
         dt = clock.tick(60) / 1000
