@@ -1,7 +1,7 @@
 import pygame
 import sys
 from logger import log_state, log_event
-from constants import SCREEN_WIDTH, SCREEN_HEIGHT, SCORE_PER_AKSTEROID, SCORE_POSITION_X, SCORE_POSITION_Y, SCORE_FONT_SIZE, SCORE_COLOR, BACKGROUND_COLOR
+from constants import SCREEN_WIDTH, SCREEN_HEIGHT, SCORE_PER_AKSTEROID, SCORE_POSITION_X, SCORE_POSITION_Y, SCORE_FONT_SIZE, SCORE_COLOR, BACKGROUND_COLOR, BACKGROUND_IMAGE_PATH, USE_BACKGROUND_IMAGE
 from player import Player
 from aksteroidfield import AksteroidField
 from aksteroid import Aksteroid
@@ -11,6 +11,17 @@ def draw_score(screen, font, score):
     score_surface = font.render(f"Score: {score}", True, SCORE_COLOR)
     screen.blit(score_surface, (SCORE_POSITION_X, SCORE_POSITION_Y))
 
+def load_background():
+    if not USE_BACKGROUND_IMAGE:
+        return None
+
+    try:
+        background = pygame.image.load(BACKGROUND_IMAGE_PATH).convert()
+        background = pygame.transform.scale(background, (SCREEN_WIDTH, SCREEN_HEIGHT))
+        return background
+    except (pygame.error, FileNotFoundError):
+        return None
+
 
 def main():
     pygame.init()
@@ -18,6 +29,7 @@ def main():
     clock = pygame.time.Clock()
     score_font = pygame.font.Font(None, SCORE_FONT_SIZE)
     score = 0
+    background = load_background()
     dt = 0
     print(f"Starting Aksteroids with pygame version: {pygame.version.ver}")
     print(f"Screen width: {SCREEN_WIDTH}")
@@ -40,8 +52,11 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return
-
-        screen.fill(BACKGROUND_COLOR)
+       
+        if background is not None:
+            screen.blit(background, (0, 0))
+        else: 
+            screen.fill(BACKGROUND_COLOR)
 
         updatable.update(dt)
 
