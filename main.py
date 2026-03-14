@@ -21,6 +21,7 @@ from player import Player
 from aksteroidfield import AksteroidField
 from aksteroid import Aksteroid
 from shot import Shot
+from explosion import Explosion
 
 def draw_score(screen, font, score):
     score_surface = font.render(f"Score: {score}", True, SCORE_COLOR)
@@ -59,9 +60,11 @@ def main():
     drawable = pygame.sprite.Group()
     aksteroids = pygame.sprite.Group()
     shots = pygame.sprite.Group()
+    explosions = pygame.sprite.Group()
     AksteroidField.containers = (updatable,)
     Aksteroid.containers = (aksteroids, updatable, drawable)
     Shot.containers = (shots, updatable, drawable)
+    Explosion.containers = (explosions, updatable, drawable)
     _aksteroid_field = AksteroidField()
 
     Player.containers = (updatable, drawable)
@@ -104,6 +107,11 @@ def main():
                 if aksteroid.collides_with(shot):
                     log_event("aksteroid_shot")
                     score += SCORE_PER_AKSTEROID
+
+                    hit_position = aksteroid.position.copy()
+                    hit_radius = aksteroid.radius
+                    Explosion(hit_position.x, hit_position.y, hit_radius)
+
                     aksteroid.split()
                     shot.kill()
                     break
