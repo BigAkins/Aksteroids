@@ -12,6 +12,10 @@ from constants import (
     PLAYER_MIN_VELOCITY,
     SCREEN_WIDTH,
     SCREEN_HEIGHT,
+    PLAYER_IMAGE_PATH,
+    USE_PLAYER_IMAGE,
+    PLAYER_IMAGE_WIDTH,
+    PLAYER_IMAGE_HEIGHT,
 )
 import pygame
 from shot import Shot
@@ -21,6 +25,21 @@ class Player(CircleShape):
         super().__init__(x, y, PLAYER_RADIUS)
         self.rotation = 0
         self.shot_cooldown = 0
+        self.player_image = self.load_player_image()
+
+    def load_player_image(self):
+        if not USE_PLAYER_IMAGE:
+            return None
+
+        try:
+            player_image = pygame.image.load(PLAYER_IMAGE_PATH).convert_alpha()
+            player_image = pygame.transform.smoothscale(
+                player_image,
+                (PLAYER_IMAGE_WIDTH, PLAYER_IMAGE_HEIGHT),
+            )
+            return player_image
+        except (pygame.error, FileNotFoundError):
+            return None
    
     def triangle(self):
         forward = pygame.Vector2(0, 1).rotate(self.rotation)
@@ -31,6 +50,12 @@ class Player(CircleShape):
         return [a, b, c]
 
     def draw(self, screen):
+        if self.player_image is not None:
+            rotated_image = pygame.transform.rotate(self.player_image, -self.rotation)
+            image_rect = rotated_image.get_rect(center=self.position)
+            screen.blit(rotated_image, image_rect)
+            return
+
         pygame.draw.polygon(
             screen,
             "white",
