@@ -16,6 +16,9 @@ from constants import (
     USE_PLAYER_IMAGE,
     PLAYER_IMAGE_WIDTH,
     PLAYER_IMAGE_HEIGHT,
+    SPEED_POWERUP_DURATION_SECONDS,
+    SPEED_POWERUP_ACCELERATION_MULTIPLIER,
+    SPEED_POWERUP_MAX_SPEED_MULTIPLIER,
 )
 import pygame
 from shot import Shot
@@ -26,6 +29,7 @@ class Player(CircleShape):
         self.rotation = 0
         self.shot_cooldown = 0
         self.player_image = self.load_player_image()
+        self.speed_powerup_timer = 0
 
     def load_player_image(self):
         if not USE_PLAYER_IMAGE:
@@ -72,13 +76,26 @@ class Player(CircleShape):
         self.rotation = 0
         self.shot_cooldown = 0
 
-    
+    def activate_speed_powerup(self):
+        self.speed_powerup_timer = SPEED_POWERUP_DURATION_SECONDS
+
+    def get_current_acceleration(self):
+        if self.speed_powerup_timer > 0:
+            return PLAYER_ACCELERATION * SPEED_POWERUP_ACCELERATION_MULTIPLIER
+        return PLAYER_ACCELERATION
+
+    def get_current_max_speed(self):
+        if self.speed_powerup_timer > 0:
+            return PLAYER_MAX_SPEED * SPEED_POWERUP_MAX_SPEED_MULTIPLIER
+        return PLAYER_MAX_SPEED
+
     def accelerate(self, amount, dt):
         direction = pygame.Vector2(0, 1).rotate(self.rotation)
         self.velocity += direction * amount * dt
 
-        if self.velocity.length() > PLAYER_MAX_SPEED:
-            self.velocity.scale_to_length(PLAYER_MAX_SPEED)
+        current_max_speed = self.get_current_max_speed()
+        if self.velocity.length() > current_max_speed:
+            self.velocity.scale_to_length(current_max_speed)
 
     def move(self, dt):
         self.position += self.velocity * dt
@@ -107,12 +124,17 @@ class Player(CircleShape):
         if self.shot_cooldown < 0:
             self.shot_cooldown = 0
 
+        if self.speed_powerup_timer > 0:
+            self.speed_powerup_timer -= dt
+            if self.speed_powerup_timer < 0:
+                self.speed_powerup_timer = 0
+
         if keys[pygame.K_a]:
             self.rotate(-dt)
         if keys[pygame.K_d]:
             self.rotate(dt)
         if keys[pygame.K_w]:
-            self.accelerate(PLAYER_ACCELERATION, dt)
+            self.accelerate(self.get_current_acceleration(), dt)
         if keys[pygame.K_s]:
             self.accelerate(-PLAYER_REVERSE_ACCELERATION, dt)
         if keys[pygame.K_SPACE]:
