@@ -18,6 +18,8 @@ from constants import (
     LIVES_POSITION_Y,
     SPEED_POWERUP_SPAWN_X,
     SPEED_POWERUP_SPAWN_Y,
+    SHIELD_POWERUP_SPAWN_X,
+    SHIELD_POWERUP_SPAWN_Y,
 )
 from player import Player
 from aksteroidfield import AksteroidField
@@ -25,6 +27,7 @@ from aksteroid import Aksteroid
 from shot import Shot
 from explosion import Explosion
 from speedpowerup import SpeedPowerUp
+from shieldpowerup import ShieldPowerUp
 
 def draw_score(screen, font, score):
     score_surface = font.render(f"Score: {score}", True, SCORE_COLOR)
@@ -65,16 +68,19 @@ def main():
     shots = pygame.sprite.Group()
     explosions = pygame.sprite.Group()
     speed_powerups = pygame.sprite.Group()
+    shield_powerups = pygame.sprite.Group()
     AksteroidField.containers = (updatable,)
     Aksteroid.containers = (aksteroids, updatable, drawable)
     Shot.containers = (shots, updatable, drawable)
     Explosion.containers = (explosions, updatable, drawable)
     SpeedPowerUp.containers = (speed_powerups, updatable, drawable)
+    ShieldPowerUp.containers = (shield_powerups, updatable, drawable)
     _aksteroid_field = AksteroidField()
 
     Player.containers = (updatable, drawable)
     player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
     SpeedPowerUp(SPEED_POWERUP_SPAWN_X, SPEED_POWERUP_SPAWN_Y)
+    ShieldPowerUp(SHIELD_POWERUP_SPAWN_X, SHIELD_POWERUP_SPAWN_Y)
 
     while True:
         log_state()
@@ -96,6 +102,12 @@ def main():
                 speed_powerup.kill()
                 break
 
+        for shield_powerup in shield_powerups:
+            if shield_powerup.collides_with(player):
+                player.activate_shield()
+                shield_powerup.kill()
+                break
+
         if respawn_invulnerability_timer > 0:
             respawn_invulnerability_timer -= dt
             if respawn_invulnerability_timer < 0:
@@ -103,6 +115,10 @@ def main():
 
         for aksteroid in aksteroids:
             if respawn_invulnerability_timer <= 0 and aksteroid.collides_with(player):
+                if player.consume_shield():
+                    aksteroid.split()
+                    break
+
                 log_event("player_hit")
                 lives -= 1
 
