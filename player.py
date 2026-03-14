@@ -30,6 +30,7 @@ class Player(CircleShape):
         self.shot_cooldown = 0
         self.player_image = self.load_player_image()
         self.speed_powerup_timer = 0
+        self.shield_active = False
 
     def load_player_image(self):
         if not USE_PLAYER_IMAGE:
@@ -78,6 +79,16 @@ class Player(CircleShape):
 
     def activate_speed_powerup(self):
         self.speed_powerup_timer = SPEED_POWERUP_DURATION_SECONDS
+
+    def activate_shield(self):
+        self.shield_active = True
+
+    def consume_shield(self):
+        if not self.shield_active:
+            return False
+
+        self.shield_active = False
+        return True
 
     def get_current_acceleration(self):
         if self.speed_powerup_timer > 0:
