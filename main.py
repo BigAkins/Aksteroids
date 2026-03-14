@@ -16,12 +16,15 @@ from constants import (
     PLAYER_RESPAWN_INVULNERABILITY_SECONDS,
     LIVES_POSITION_X,
     LIVES_POSITION_Y,
+    SPEED_POWERUP_SPAWN_X,
+    SPEED_POWERUP_SPAWN_Y,
 )
 from player import Player
 from aksteroidfield import AksteroidField
 from aksteroid import Aksteroid
 from shot import Shot
 from explosion import Explosion
+from speedpowerup import SpeedPowerUp
 
 def draw_score(screen, font, score):
     score_surface = font.render(f"Score: {score}", True, SCORE_COLOR)
@@ -61,14 +64,17 @@ def main():
     aksteroids = pygame.sprite.Group()
     shots = pygame.sprite.Group()
     explosions = pygame.sprite.Group()
+    speed_powerups = pygame.sprite.Group()
     AksteroidField.containers = (updatable,)
     Aksteroid.containers = (aksteroids, updatable, drawable)
     Shot.containers = (shots, updatable, drawable)
     Explosion.containers = (explosions, updatable, drawable)
+    SpeedPowerUp.containers = (speed_powerups, updatable, drawable)
     _aksteroid_field = AksteroidField()
 
     Player.containers = (updatable, drawable)
     player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
+    SpeedPowerUp(SPEED_POWERUP_SPAWN_X, SPEED_POWERUP_SPAWN_Y)
 
     while True:
         log_state()
@@ -83,6 +89,12 @@ def main():
             screen.fill(BACKGROUND_COLOR)
 
         updatable.update(dt)
+
+        for speed_powerup in speed_powerups:
+            if speed_powerup.collides_with(player):
+                player.activate_speed_powerup()
+                speed_powerup.kill()
+                break
 
         if respawn_invulnerability_timer > 0:
             respawn_invulnerability_timer -= dt
