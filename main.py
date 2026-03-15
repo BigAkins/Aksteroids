@@ -59,6 +59,9 @@ from constants import (
     USE_GAME_OVER_IMAGE,
     GAME_OVER_IMAGE_WIDTH,
     GAME_OVER_IMAGE_HEIGHT,
+    HIGH_SCORE_FILE_PATH,
+    START_SCREEN_HIGH_SCORE_Y,
+    GAME_OVER_HIGH_SCORE_Y,
 )
 from player import Player
 from aksteroidfield import AksteroidField
@@ -176,6 +179,19 @@ def load_screen_image(image_path, use_image, max_width, max_height):
         return None
 
 
+def load_high_score():
+    try:
+        with open(HIGH_SCORE_FILE_PATH, "r", encoding="utf-8") as high_score_file:
+            return int(high_score_file.read().strip())
+    except (FileNotFoundError, ValueError):
+        return 0
+
+
+def save_high_score(high_score):
+    with open(HIGH_SCORE_FILE_PATH, "w", encoding="utf-8") as high_score_file:
+        high_score_file.write(str(high_score))
+
+
 def draw_centered_text(screen, font, text, y, color):
     text_surface = font.render(text, True, color)
     text_rect = text_surface.get_rect(center=(SCREEN_WIDTH / 2, y))
@@ -188,7 +204,7 @@ def draw_overlay(screen):
     screen.blit(overlay, (0, 0))
 
 
-def draw_start_screen(screen, title_font, subtitle_font, title_image):
+def draw_start_screen(screen, title_font, subtitle_font, title_image, high_score):
     draw_overlay(screen)
 
     if title_image is not None:
@@ -207,13 +223,20 @@ def draw_start_screen(screen, title_font, subtitle_font, title_image):
     draw_centered_text(
         screen,
         subtitle_font,
+        f"High Score: {high_score}",
+        START_SCREEN_HIGH_SCORE_Y,
+        SCREEN_TEXT_COLOR,
+    )
+    draw_centered_text(
+        screen,
+        subtitle_font,
         "Press Q to Quit",
         SCREEN_INSTRUCTION_Y,
         SCREEN_TEXT_COLOR,
     )
 
 
-def draw_game_over_screen(screen, title_font, subtitle_font, score, game_over_image):
+def draw_game_over_screen(screen, title_font, subtitle_font, score, high_score, game_over_image):
     draw_overlay(screen)
 
     if game_over_image is not None:
@@ -227,6 +250,13 @@ def draw_game_over_screen(screen, title_font, subtitle_font, score, game_over_im
         subtitle_font,
         f"Final Score: {score}",
         SCREEN_SUBTITLE_Y,
+        SCREEN_TEXT_COLOR,
+    )
+    draw_centered_text(
+        screen,
+        subtitle_font,
+        f"High Score: {high_score}",
+        GAME_OVER_HIGH_SCORE_Y,
         SCREEN_TEXT_COLOR,
     )
     draw_centered_text(
@@ -303,6 +333,7 @@ def main():
         GAME_OVER_IMAGE_WIDTH,
         GAME_OVER_IMAGE_HEIGHT,
     )
+    high_score = load_high_score()
     background = load_background()
     dt = 0
     print(f"Starting Aksteroids with pygame version: {pygame.version.ver}")
@@ -371,13 +402,13 @@ def main():
             screen.fill(BACKGROUND_COLOR)
 
         if game_state == GAME_STATE_START:
-            draw_start_screen(screen, title_font, subtitle_font, title_image)
+            draw_start_screen(screen, title_font, subtitle_font, title_image, high_score)
             pygame.display.flip()
             dt = clock.tick(60) / 1000
             continue
 
         if game_state != GAME_STATE_PLAYING:
-            draw_game_over_screen(screen, title_font, subtitle_font, score, game_over_image)
+            draw_game_over_screen(screen, title_font, subtitle_font, score, high_score, game_over_image)
             pygame.display.flip()
             dt = clock.tick(60) / 1000
             continue
@@ -422,6 +453,10 @@ def main():
                 lives -= 1
 
                 if lives <= 0:
+                    if score > high_score:
+                        high_score = score
+                        save_high_score(high_score)
+
                     game_state = GAME_STATE_GAME_OVER
                     break
 
