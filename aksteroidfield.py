@@ -1,3 +1,5 @@
+from typing import Any, ClassVar
+
 import pygame
 import random
 from aksteroid import Aksteroid
@@ -5,6 +7,8 @@ from constants import *
 
 
 class AksteroidField(pygame.sprite.Sprite):
+    containers: ClassVar[tuple[pygame.sprite.AbstractGroup[Any], ...]] = ()
+
     edges = [
         [
             pygame.Vector2(1, 0),
@@ -29,7 +33,7 @@ class AksteroidField(pygame.sprite.Sprite):
     ]
 
     def __init__(self):
-        pygame.sprite.Sprite.__init__(self, self.containers)
+        super().__init__(*self.containers)
         self.spawn_timer = 0.0
 
     def spawn(self, radius, position, velocity):

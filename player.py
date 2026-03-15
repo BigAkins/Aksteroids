@@ -1,3 +1,4 @@
+import math
 from circleshape import CircleShape
 from constants import (
     PLAYER_RADIUS,
@@ -30,6 +31,16 @@ from constants import (
     SPREAD_WEAPON_SHOT_SPEED,
     RAPID_WEAPON_COOLDOWN,
     RAPID_WEAPON_SHOT_SPEED,
+    SHIELD_INDICATOR_COLOR,
+    SHIELD_INDICATOR_RADIUS_OFFSET,
+    SHIELD_INDICATOR_LINE_WIDTH,
+    SHIELD_INDICATOR_PULSE_SPEED,
+    SHIELD_INDICATOR_PULSE_AMOUNT,
+    SPEED_INDICATOR_COLOR,
+    SPEED_INDICATOR_RADIUS_OFFSET,
+    SPEED_INDICATOR_LINE_WIDTH,
+    SPEED_INDICATOR_PULSE_SPEED,
+    SPEED_INDICATOR_PULSE_AMOUNT,
 )
 import pygame
 from asset_utils import load_image_with_aspect_ratio
@@ -47,6 +58,7 @@ class Player(CircleShape):
         self.bomb_pressed_last_frame = False
         self.trigger_bomb = False
         self.current_weapon = WEAPON_NORMAL
+        self.effect_animation_time = 0
 
     def load_player_image(self):
         if not USE_PLAYER_IMAGE:
@@ -69,7 +81,37 @@ class Player(CircleShape):
         c = self.position - forward * self.radius + right
         return [a, b, c]
 
+    def draw_shield_indicator(self, screen):
+        pulse = math.sin(self.effect_animation_time * SHIELD_INDICATOR_PULSE_SPEED)
+        radius = self.radius + SHIELD_INDICATOR_RADIUS_OFFSET + pulse * SHIELD_INDICATOR_PULSE_AMOUNT
+
+        pygame.draw.circle(
+            screen,
+            SHIELD_INDICATOR_COLOR,
+            self.position,
+            radius,
+            SHIELD_INDICATOR_LINE_WIDTH,
+        )
+
+    def draw_speed_indicator(self, screen):
+        pulse = math.sin(self.effect_animation_time * SPEED_INDICATOR_PULSE_SPEED)
+        radius = self.radius + SPEED_INDICATOR_RADIUS_OFFSET + pulse * SPEED_INDICATOR_PULSE_AMOUNT
+
+        pygame.draw.circle(
+            screen,
+            SPEED_INDICATOR_COLOR,
+            self.position,
+            radius,
+            SPEED_INDICATOR_LINE_WIDTH,
+        )
+
     def draw(self, screen):
+        if self.shield_active:
+            self.draw_shield_indicator(screen)
+
+        if self.speed_powerup_timer > 0:
+            self.draw_speed_indicator(screen)
+
         if self.player_image is not None:
             rotated_image = pygame.transform.rotate(self.player_image, -self.rotation)
             image_rect = rotated_image.get_rect(center=self.position)
@@ -114,6 +156,9 @@ class Player(CircleShape):
 
         self.bombs -= 1
         return True
+
+    def add_bomb(self, amount=1):
+        self.bombs += amount
 
     def switch_weapon(self, weapon_name):
         self.current_weapon = weapon_name
@@ -181,6 +226,7 @@ class Player(CircleShape):
 
     def update(self, dt):
         keys = pygame.key.get_pressed()
+        self.effect_animation_time += dt
 
         self.shot_cooldown -= dt
         if self.shot_cooldown < 0:

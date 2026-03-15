@@ -1,7 +1,9 @@
 import inspect
 import json
 import math
+import sys
 from datetime import datetime
+from pathlib import Path
 
 __all__ = ["log_state", "log_event"]
 
@@ -13,6 +15,18 @@ _frame_count = 0
 _state_log_initialized = False
 _event_log_initialized = False
 _start_time = datetime.now()
+
+
+def get_log_file_path(filename: str) -> Path:
+    if sys.platform == "darwin":
+        base_dir = Path.home() / "Library" / "Application Support" / "Aksteroids"
+    elif sys.platform == "win32":
+        base_dir = Path.home() / "AppData" / "Roaming" / "Aksteroids"
+    else:
+        base_dir = Path.home() / ".local" / "share" / "Aksteroids"
+
+    base_dir.mkdir(parents=True, exist_ok=True)
+    return base_dir / filename
 
 
 def log_state():
@@ -107,9 +121,9 @@ def log_state():
         **game_state,
     }
 
-    # New log file on each run
     mode = "w" if not _state_log_initialized else "a"
-    with open("game_state.jsonl", mode) as f:
+    log_path = get_log_file_path("game_state.jsonl")
+    with open(log_path, mode, encoding="utf-8") as f:
         f.write(json.dumps(entry) + "\n")
 
     _state_log_initialized = True
@@ -129,7 +143,8 @@ def log_event(event_type, **details):
     }
 
     mode = "w" if not _event_log_initialized else "a"
-    with open("game_events.jsonl", mode) as f:
+    log_path = get_log_file_path("game_events.jsonl")
+    with open(log_path, mode, encoding="utf-8") as f:
         f.write(json.dumps(event) + "\n")
 
     _event_log_initialized = True
