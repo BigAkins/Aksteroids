@@ -91,6 +91,13 @@ from constants import (
     BOMB_POWERUP_SPAWN_INTERVAL_MAX_SECONDS,
     BOMB_POWERUP_MAX_ACTIVE,
     TOTAL_BOMB_PICKUPS_AVAILABLE,
+    SCREEN_SHAKE_ENABLED,
+    SCREEN_SHAKE_BOMB_DURATION,
+    SCREEN_SHAKE_BOMB_INTENSITY,
+    SCREEN_SHAKE_EXPLOSION_DURATION,
+    SCREEN_SHAKE_EXPLOSION_INTENSITY,
+    SCREEN_SHAKE_PLAYER_HIT_DURATION,
+    SCREEN_SHAKE_PLAYER_HIT_INTENSITY,
 )
 
 from player import Player
@@ -147,7 +154,7 @@ def render_outlined_text(font, text, text_color, outline_color, outline_thicknes
     return outlined_surface
 
 
-def draw_score(screen, font, score):
+def draw_score(screen, font, score, offset_x=0, offset_y=0):
     score_surface = render_outlined_text(
         font,
         f"Score: {score}",
@@ -155,10 +162,10 @@ def draw_score(screen, font, score):
         TEXT_OUTLINE_COLOR,
         TEXT_OUTLINE_THICKNESS,
     )
-    screen.blit(score_surface, (SCORE_POSITION_X, SCORE_POSITION_Y))
+    screen.blit(score_surface, (SCORE_POSITION_X + offset_x, SCORE_POSITION_Y + offset_y))
 
 
-def draw_lives(screen, font, lives):
+def draw_lives(screen, font, lives, offset_x=0, offset_y=0):
     lives_surface = render_outlined_text(
         font,
         f"Lives: {lives}",
@@ -166,7 +173,7 @@ def draw_lives(screen, font, lives):
         TEXT_OUTLINE_COLOR,
         TEXT_OUTLINE_THICKNESS,
     )
-    screen.blit(lives_surface, (LIVES_POSITION_X, LIVES_POSITION_Y))
+    screen.blit(lives_surface, (LIVES_POSITION_X + offset_x, LIVES_POSITION_Y + offset_y))
 
 
 def load_weapon_icon(icon_path):
@@ -191,7 +198,7 @@ def load_weapon_icons():
     }
 
 
-def draw_weapon(screen, font, player, weapon_icons):
+def draw_weapon(screen, font, player, weapon_icons, offset_x=0, offset_y=0):
     weapon_name = player.get_weapon_name()
     weapon_surface = render_outlined_text(
         font,
@@ -200,14 +207,14 @@ def draw_weapon(screen, font, player, weapon_icons):
         TEXT_OUTLINE_COLOR,
         TEXT_OUTLINE_THICKNESS,
     )
-    screen.blit(weapon_surface, (WEAPON_POSITION_X, WEAPON_POSITION_Y))
+    screen.blit(weapon_surface, (WEAPON_POSITION_X + offset_x, WEAPON_POSITION_Y + offset_y))
 
     weapon_icon = weapon_icons.get(weapon_name)
     if weapon_icon is None:
         return
 
-    icon_x = WEAPON_POSITION_X + weapon_surface.get_width() + WEAPON_ICON_SPACING
-    icon_y = WEAPON_POSITION_Y + (weapon_surface.get_height() - weapon_icon.get_height()) / 2
+    icon_x = WEAPON_POSITION_X + offset_x + weapon_surface.get_width() + WEAPON_ICON_SPACING
+    icon_y = WEAPON_POSITION_Y + offset_y + (weapon_surface.get_height() - weapon_icon.get_height()) / 2
     screen.blit(weapon_icon, (icon_x, icon_y))
 
 
@@ -225,7 +232,7 @@ def load_bomb_hud_image():
         return None
 
 
-def draw_bombs(screen, font, bombs, bomb_image):
+def draw_bombs(screen, font, bombs, bomb_image, offset_x=0, offset_y=0):
     bombs_surface = render_outlined_text(
         font,
         f"Bombs: {bombs}",
@@ -233,14 +240,14 @@ def draw_bombs(screen, font, bombs, bomb_image):
         TEXT_OUTLINE_COLOR,
         TEXT_OUTLINE_THICKNESS,
     )
-    screen.blit(bombs_surface, (BOMBS_POSITION_X, BOMBS_POSITION_Y))
+    screen.blit(bombs_surface, (BOMBS_POSITION_X + offset_x, BOMBS_POSITION_Y + offset_y))
 
     if bomb_image is None:
         return
 
     text_width = bombs_surface.get_width()
-    image_x = BOMBS_POSITION_X + text_width + BOMB_HUD_IMAGE_SPACING
-    image_y = BOMBS_POSITION_Y + (bombs_surface.get_height() - bomb_image.get_height()) / 2
+    image_x = BOMBS_POSITION_X + offset_x + text_width + BOMB_HUD_IMAGE_SPACING
+    image_y = BOMBS_POSITION_Y + offset_y + (bombs_surface.get_height() - bomb_image.get_height()) / 2
 
     for bomb_index in range(bombs):
         screen.blit(
@@ -352,7 +359,7 @@ def spawn_bomb_powerup(bomb_powerups):
     BombPowerUp(spawn_x, spawn_y)
 
 
-def draw_centered_text(screen, font, text, y, color):
+def draw_centered_text(screen, font, text, y, color, offset_x=0, offset_y=0):
     text_surface = render_outlined_text(
         font,
         text,
@@ -360,7 +367,7 @@ def draw_centered_text(screen, font, text, y, color):
         TEXT_OUTLINE_COLOR,
         TEXT_OUTLINE_THICKNESS,
     )
-    text_rect = text_surface.get_rect(center=(SCREEN_WIDTH / 2, y))
+    text_rect = text_surface.get_rect(center=(SCREEN_WIDTH / 2 + offset_x, y + offset_y))
     screen.blit(text_surface, text_rect)
 
 
@@ -370,14 +377,14 @@ def draw_overlay(screen):
     screen.blit(overlay, (0, 0))
 
 
-def draw_start_screen(screen, title_font, subtitle_font, title_image, high_score):
+def draw_start_screen(screen, title_font, subtitle_font, title_image, high_score, offset_x=0, offset_y=0):
     draw_overlay(screen)
 
     if title_image is not None:
-        title_rect = title_image.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_TITLE_Y))
+        title_rect = title_image.get_rect(center=(SCREEN_WIDTH / 2 + offset_x, SCREEN_TITLE_Y + offset_y))
         screen.blit(title_image, title_rect)
     else:
-        draw_centered_text(screen, title_font, "AKSTEROID", SCREEN_TITLE_Y, SCREEN_TEXT_COLOR)
+        draw_centered_text(screen, title_font, "AKSTEROID", SCREEN_TITLE_Y, SCREEN_TEXT_COLOR, offset_x, offset_y)
 
     draw_centered_text(
         screen,
@@ -385,6 +392,8 @@ def draw_start_screen(screen, title_font, subtitle_font, title_image, high_score
         "Press ENTER to Start",
         SCREEN_SUBTITLE_Y,
         SCREEN_TEXT_COLOR,
+        offset_x,
+        offset_y,
     )
     draw_centered_text(
         screen,
@@ -392,6 +401,8 @@ def draw_start_screen(screen, title_font, subtitle_font, title_image, high_score
         "Press I for Instructions",
         SCREEN_INSTRUCTION_Y,
         SCREEN_TEXT_COLOR,
+        offset_x,
+        offset_y,
     )
     draw_centered_text(
         screen,
@@ -399,6 +410,8 @@ def draw_start_screen(screen, title_font, subtitle_font, title_image, high_score
         "Press Q to Quit",
         SCREEN_SECONDARY_INSTRUCTION_Y,
         SCREEN_TEXT_COLOR,
+        offset_x,
+        offset_y,
     )
     draw_centered_text(
         screen,
@@ -406,17 +419,19 @@ def draw_start_screen(screen, title_font, subtitle_font, title_image, high_score
         f"High Score: {high_score}",
         START_SCREEN_HIGH_SCORE_Y,
         SCREEN_TEXT_COLOR,
+        offset_x,
+        offset_y,
     )
 
 
-def draw_game_over_screen(screen, title_font, subtitle_font, score, high_score, game_over_image):
+def draw_game_over_screen(screen, title_font, subtitle_font, score, high_score, game_over_image, offset_x=0, offset_y=0):
     draw_overlay(screen)
 
     if game_over_image is not None:
-        game_over_rect = game_over_image.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_TITLE_Y))
+        game_over_rect = game_over_image.get_rect(center=(SCREEN_WIDTH / 2 + offset_x, SCREEN_TITLE_Y + offset_y))
         screen.blit(game_over_image, game_over_rect)
     else:
-        draw_centered_text(screen, title_font, "GAME OVER", SCREEN_TITLE_Y, SCREEN_TEXT_COLOR)
+        draw_centered_text(screen, title_font, "GAME OVER", SCREEN_TITLE_Y, SCREEN_TEXT_COLOR, offset_x, offset_y)
 
     draw_centered_text(
         screen,
@@ -424,6 +439,8 @@ def draw_game_over_screen(screen, title_font, subtitle_font, score, high_score, 
         f"Final Score: {score}",
         SCREEN_SUBTITLE_Y,
         SCREEN_TEXT_COLOR,
+        offset_x,
+        offset_y,
     )
     draw_centered_text(
         screen,
@@ -431,6 +448,8 @@ def draw_game_over_screen(screen, title_font, subtitle_font, score, high_score, 
         "Press R to Restart",
         SCREEN_INSTRUCTION_Y,
         SCREEN_TEXT_COLOR,
+        offset_x,
+        offset_y,
     )
     draw_centered_text(
         screen,
@@ -438,6 +457,8 @@ def draw_game_over_screen(screen, title_font, subtitle_font, score, high_score, 
         "Press I for Instructions",
         SCREEN_SECONDARY_INSTRUCTION_Y,
         SCREEN_TEXT_COLOR,
+        offset_x,
+        offset_y,
     )
     draw_centered_text(
         screen,
@@ -445,6 +466,8 @@ def draw_game_over_screen(screen, title_font, subtitle_font, score, high_score, 
         "Press Q to Quit",
         SCREEN_THIRD_INSTRUCTION_Y,
         SCREEN_TEXT_COLOR,
+        offset_x,
+        offset_y,
     )
     draw_centered_text(
         screen,
@@ -452,17 +475,19 @@ def draw_game_over_screen(screen, title_font, subtitle_font, score, high_score, 
         f"High Score: {high_score}",
         GAME_OVER_HIGH_SCORE_Y,
         SCREEN_TEXT_COLOR,
+        offset_x,
+        offset_y,
     )
 
 
-def draw_pause_screen(screen, title_image, title_font, subtitle_font):
+def draw_pause_screen(screen, title_image, title_font, subtitle_font, offset_x=0, offset_y=0):
     draw_overlay(screen)
 
     if title_image is not None:
-        title_rect = title_image.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_TITLE_Y))
+        title_rect = title_image.get_rect(center=(SCREEN_WIDTH / 2 + offset_x, SCREEN_TITLE_Y + offset_y))
         screen.blit(title_image, title_rect)
     else:
-        draw_centered_text(screen, title_font, "AKSTEROID", SCREEN_TITLE_Y, SCREEN_TEXT_COLOR)
+        draw_centered_text(screen, title_font, "AKSTEROID", SCREEN_TITLE_Y, SCREEN_TEXT_COLOR, offset_x, offset_y)
 
     draw_centered_text(
         screen,
@@ -470,6 +495,8 @@ def draw_pause_screen(screen, title_image, title_font, subtitle_font):
         "PAUSED",
         PAUSE_SCREEN_SUBTITLE_Y,
         SCREEN_TEXT_COLOR,
+        offset_x,
+        offset_y,
     )
     draw_centered_text(
         screen,
@@ -477,6 +504,8 @@ def draw_pause_screen(screen, title_image, title_font, subtitle_font):
         "Press ESC to Resume",
         PAUSE_SCREEN_INSTRUCTION_Y,
         SCREEN_TEXT_COLOR,
+        offset_x,
+        offset_y,
     )
     draw_centered_text(
         screen,
@@ -484,6 +513,8 @@ def draw_pause_screen(screen, title_image, title_font, subtitle_font):
         "Press I for Instructions",
         PAUSE_SCREEN_SECONDARY_INSTRUCTION_Y,
         SCREEN_TEXT_COLOR,
+        offset_x,
+        offset_y,
     )
     draw_centered_text(
         screen,
@@ -491,18 +522,20 @@ def draw_pause_screen(screen, title_image, title_font, subtitle_font):
         "Press Q to Quit",
         SCREEN_THIRD_INSTRUCTION_Y,
         SCREEN_TEXT_COLOR,
+        offset_x,
+        offset_y,
     )
 
 
 # INSTRUCTIONS SCREEN
-def draw_instructions_screen(screen, title_image, title_font, subtitle_font):
+def draw_instructions_screen(screen, title_image, title_font, subtitle_font, offset_x=0, offset_y=0):
     draw_overlay(screen)
 
     if title_image is not None:
-        title_rect = title_image.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_TITLE_Y))
+        title_rect = title_image.get_rect(center=(SCREEN_WIDTH / 2 + offset_x, SCREEN_TITLE_Y + offset_y))
         screen.blit(title_image, title_rect)
     else:
-        draw_centered_text(screen, title_font, "AKSTEROID", SCREEN_TITLE_Y, SCREEN_TEXT_COLOR)
+        draw_centered_text(screen, title_font, "AKSTEROID", SCREEN_TITLE_Y, SCREEN_TEXT_COLOR, offset_x, offset_y)
 
     draw_centered_text(
         screen,
@@ -510,6 +543,8 @@ def draw_instructions_screen(screen, title_image, title_font, subtitle_font):
         "INSTRUCTIONS",
         INSTRUCTIONS_TITLE_Y + 20,
         SCREEN_TEXT_COLOR,
+        offset_x,
+        offset_y,
     )
     draw_centered_text(
         screen,
@@ -517,6 +552,8 @@ def draw_instructions_screen(screen, title_image, title_font, subtitle_font):
         "W / S = Thrust Forward / Backward",
         INSTRUCTIONS_LINE_1_Y,
         SCREEN_TEXT_COLOR,
+        offset_x,
+        offset_y,
     )
     draw_centered_text(
         screen,
@@ -524,6 +561,8 @@ def draw_instructions_screen(screen, title_image, title_font, subtitle_font):
         "A / D = Rotate Left / Right",
         INSTRUCTIONS_LINE_2_Y,
         SCREEN_TEXT_COLOR,
+        offset_x,
+        offset_y,
     )
     draw_centered_text(
         screen,
@@ -531,6 +570,8 @@ def draw_instructions_screen(screen, title_image, title_font, subtitle_font):
         "SPACE = Shoot    B = Bomb",
         INSTRUCTIONS_LINE_3_Y,
         SCREEN_TEXT_COLOR,
+        offset_x,
+        offset_y,
     )
     draw_centered_text(
         screen,
@@ -538,6 +579,8 @@ def draw_instructions_screen(screen, title_image, title_font, subtitle_font):
         "1 / 2 / 3 = Switch Weapons",
         INSTRUCTIONS_LINE_4_Y,
         SCREEN_TEXT_COLOR,
+        offset_x,
+        offset_y,
     )
     draw_centered_text(
         screen,
@@ -545,6 +588,8 @@ def draw_instructions_screen(screen, title_image, title_font, subtitle_font):
         "ESC = Pause / Resume",
         INSTRUCTIONS_LINE_5_Y,
         SCREEN_TEXT_COLOR,
+        offset_x,
+        offset_y,
     )
     draw_centered_text(
         screen,
@@ -552,6 +597,8 @@ def draw_instructions_screen(screen, title_image, title_font, subtitle_font):
         "Collect power-ups for speed boosts and shields",
         INSTRUCTIONS_LINE_6_Y,
         SCREEN_TEXT_COLOR,
+        offset_x,
+        offset_y,
     )
     draw_centered_text(
         screen,
@@ -559,7 +606,20 @@ def draw_instructions_screen(screen, title_image, title_font, subtitle_font):
         "Press ESC or ENTER to Return",
         INSTRUCTIONS_RETURN_Y,
         SCREEN_TEXT_COLOR,
+        offset_x,
+        offset_y,
     )
+def add_screen_shake(current_timer, current_intensity, duration, intensity):
+    return max(current_timer, duration), max(current_intensity, intensity)
+
+
+def get_screen_shake_offset(shake_timer, shake_intensity):
+    if not SCREEN_SHAKE_ENABLED or shake_timer <= 0 or shake_intensity <= 0:
+        return 0, 0
+
+    offset_x = random.uniform(-shake_intensity, shake_intensity)
+    offset_y = random.uniform(-shake_intensity, shake_intensity)
+    return offset_x, offset_y
 
 
 def reset_game(
@@ -661,6 +721,9 @@ def main():
     powerup_spawn_timer = get_next_powerup_spawn_time()
     bomb_powerup_spawn_timer = get_next_bomb_powerup_spawn_time()
 
+    screen_shake_timer = 0
+    screen_shake_intensity = 0
+
     while True:
         log_state()
 
@@ -744,31 +807,44 @@ def main():
                     elif event.key == pygame.K_q:
                         return
 
+        if screen_shake_timer > 0:
+            screen_shake_timer -= dt
+            if screen_shake_timer < 0:
+                screen_shake_timer = 0
+
+        shake_offset_x, shake_offset_y = get_screen_shake_offset(
+            screen_shake_timer,
+            screen_shake_intensity,
+        )
+
+        if screen_shake_timer <= 0:
+            screen_shake_intensity = 0
+
         if background is not None:
-            screen.blit(background, (0, 0))
+            screen.blit(background, (shake_offset_x, shake_offset_y))
         else:
             screen.fill(BACKGROUND_COLOR)
 
         if game_state == GAME_STATE_START:
-            draw_start_screen(screen, title_font, subtitle_font, title_image, high_score)
+            draw_start_screen(screen, title_font, subtitle_font, title_image, high_score, shake_offset_x, shake_offset_y)
             pygame.display.flip()
             dt = clock.tick(60) / 1000
             continue
 
         if game_state == GAME_STATE_PAUSED:
-            draw_pause_screen(screen, title_image, title_font, subtitle_font)
+            draw_pause_screen(screen, title_image, title_font, subtitle_font, shake_offset_x, shake_offset_y)
             pygame.display.flip()
             dt = clock.tick(60) / 1000
             continue
 
         if game_state == GAME_STATE_INSTRUCTIONS:
-            draw_instructions_screen(screen, title_image, title_font, subtitle_font)
+            draw_instructions_screen(screen, title_image, title_font, subtitle_font, shake_offset_x, shake_offset_y)
             pygame.display.flip()
             dt = clock.tick(60) / 1000
             continue
 
         if game_state != GAME_STATE_PLAYING:
-            draw_game_over_screen(screen, title_font, subtitle_font, score, high_score, game_over_image)
+            draw_game_over_screen(screen, title_font, subtitle_font, score, high_score, game_over_image, shake_offset_x, shake_offset_y)
             pygame.display.flip()
             dt = clock.tick(60) / 1000
             continue
@@ -816,6 +892,12 @@ def main():
                 break
 
         if player.trigger_bomb:
+            screen_shake_timer, screen_shake_intensity = add_screen_shake(
+                screen_shake_timer,
+                screen_shake_intensity,
+                SCREEN_SHAKE_BOMB_DURATION,
+                SCREEN_SHAKE_BOMB_INTENSITY,
+            )
             audio_manager.play_sound("bomb")
             aksteroids_to_bomb = list(aksteroids)
 
@@ -843,6 +925,12 @@ def main():
 
                 log_event("player_hit")
                 audio_manager.play_sound("player_hit")
+                screen_shake_timer, screen_shake_intensity = add_screen_shake(
+                    screen_shake_timer,
+                    screen_shake_intensity,
+                    SCREEN_SHAKE_PLAYER_HIT_DURATION,
+                    SCREEN_SHAKE_PLAYER_HIT_INTENSITY,
+                )
                 lives -= 1
 
                 if lives <= 0:
@@ -864,6 +952,12 @@ def main():
                 if aksteroid.collides_with(shot):
                     log_event("aksteroid_shot")
                     audio_manager.play_sound("explosion")
+                    screen_shake_timer, screen_shake_intensity = add_screen_shake(
+                        screen_shake_timer,
+                        screen_shake_intensity,
+                        SCREEN_SHAKE_EXPLOSION_DURATION,
+                        SCREEN_SHAKE_EXPLOSION_INTENSITY,
+                    )
                     score += SCORE_PER_AKSTEROID
 
                     hit_position = aksteroid.position.copy()
@@ -875,12 +969,16 @@ def main():
                     break
 
         for obj in drawable:
+            original_position = obj.position.copy()
+            obj.position.x += shake_offset_x
+            obj.position.y += shake_offset_y
             obj.draw(screen)
+            obj.position = original_position
 
-        draw_score(screen, hud_font, score)
-        draw_lives(screen, hud_font, lives)
-        draw_bombs(screen, hud_font, player.bombs, bomb_hud_image)
-        draw_weapon(screen, hud_font, player, weapon_icons)
+        draw_score(screen, hud_font, score, shake_offset_x, shake_offset_y)
+        draw_lives(screen, hud_font, lives, shake_offset_x, shake_offset_y)
+        draw_bombs(screen, hud_font, player.bombs, bomb_hud_image, shake_offset_x, shake_offset_y)
+        draw_weapon(screen, hud_font, player, weapon_icons, shake_offset_x, shake_offset_y)
 
         pygame.display.flip()
         dt = clock.tick(60) / 1000
