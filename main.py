@@ -28,6 +28,18 @@ from constants import (
     BOMB_HUD_IMAGE_WIDTH,
     BOMB_HUD_IMAGE_HEIGHT,
     BOMB_HUD_IMAGE_SPACING,
+    WEAPON_POSITION_X,
+    WEAPON_POSITION_Y,
+    USE_WEAPON_ICONS,
+    WEAPON_ICON_WIDTH,
+    WEAPON_ICON_HEIGHT,
+    WEAPON_ICON_SPACING,
+    WEAPON_NORMAL,
+    WEAPON_SPREAD,
+    WEAPON_RAPID,
+    WEAPON_NORMAL_ICON_PATH,
+    WEAPON_SPREAD_ICON_PATH,
+    WEAPON_RAPID_ICON_PATH,
 )
 from player import Player
 from aksteroidfield import AksteroidField
@@ -45,6 +57,44 @@ def draw_lives(screen, font, lives):
     lives_surface = font.render(f"Lives: {lives}", True, SCORE_COLOR)
     screen.blit(lives_surface, (LIVES_POSITION_X, LIVES_POSITION_Y))
 
+
+def load_weapon_icon(icon_path):
+    try:
+        icon = pygame.image.load(icon_path).convert_alpha()
+        icon = pygame.transform.smoothscale(
+            icon,
+            (WEAPON_ICON_WIDTH, WEAPON_ICON_HEIGHT),
+        )
+        return icon
+    except (pygame.error, FileNotFoundError):
+        return None
+
+
+
+def load_weapon_icons():
+    if not USE_WEAPON_ICONS:
+        return {}
+
+    return {
+        WEAPON_NORMAL: load_weapon_icon(WEAPON_NORMAL_ICON_PATH),
+        WEAPON_SPREAD: load_weapon_icon(WEAPON_SPREAD_ICON_PATH),
+        WEAPON_RAPID: load_weapon_icon(WEAPON_RAPID_ICON_PATH),
+    }
+
+
+
+def draw_weapon(screen, font, player, weapon_icons):
+    weapon_name = player.get_weapon_name()
+    weapon_surface = font.render(f"Weapon: {weapon_name}", True, SCORE_COLOR)
+    screen.blit(weapon_surface, (WEAPON_POSITION_X, WEAPON_POSITION_Y))
+
+    weapon_icon = weapon_icons.get(weapon_name)
+    if weapon_icon is None:
+        return
+
+    icon_x = WEAPON_POSITION_X + weapon_surface.get_width() + WEAPON_ICON_SPACING
+    icon_y = WEAPON_POSITION_Y + (weapon_surface.get_height() - WEAPON_ICON_HEIGHT) / 2
+    screen.blit(weapon_icon, (icon_x, icon_y))
 
 def load_bomb_hud_image():
     if not USE_BOMB_HUD_IMAGE:
@@ -99,6 +149,7 @@ def main():
     clock = pygame.time.Clock()
     hud_font = pygame.font.Font(None, SCORE_FONT_SIZE)
     bomb_hud_image = load_bomb_hud_image()
+    weapon_icons = load_weapon_icons()
     score = 0
     lives = PLAYER_STARTING_LIVES
     respawn_invulnerability_timer = 0
@@ -206,6 +257,7 @@ def main():
         draw_score(screen, hud_font, score)
         draw_lives(screen, hud_font, lives)
         draw_bombs(screen, hud_font, player.bombs, bomb_hud_image)
+        draw_weapon(screen, hud_font, player, weapon_icons)
 
         pygame.display.flip()
         dt = clock.tick(60) / 1000
