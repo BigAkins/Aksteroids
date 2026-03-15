@@ -1,4 +1,5 @@
 import pygame
+from asset_utils import load_image_with_aspect_ratio
 
 from circleshape import CircleShape
 from constants import (
@@ -22,12 +23,11 @@ class SpeedPowerUp(CircleShape):
             return None
 
         try:
-            image = pygame.image.load(SPEED_POWERUP_IMAGE_PATH).convert_alpha()
-            image = pygame.transform.smoothscale(
-                image,
-                (SPEED_POWERUP_IMAGE_WIDTH, SPEED_POWERUP_IMAGE_HEIGHT),
+            return load_image_with_aspect_ratio(
+                SPEED_POWERUP_IMAGE_PATH,
+                SPEED_POWERUP_IMAGE_WIDTH,
+                SPEED_POWERUP_IMAGE_HEIGHT,
             )
-            return image
         except (pygame.error, FileNotFoundError):
             return None
 

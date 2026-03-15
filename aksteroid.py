@@ -1,6 +1,7 @@
 from circleshape import CircleShape
 import pygame
 import random
+from asset_utils import load_image_with_aspect_ratio
 from logger import log_event
 from constants import (
     LINE_WIDTH,
@@ -44,8 +45,11 @@ class Aksteroid(CircleShape):
             return cls.image_cache[cache_key]
 
         try:
-            image = pygame.image.load(image_path).convert_alpha()
-            image = pygame.transform.smoothscale(image, (diameter, diameter))
+            image = load_image_with_aspect_ratio(
+                image_path,
+                diameter,
+                diameter,
+            )
             cls.image_cache[cache_key] = image
             return image
         except (pygame.error, FileNotFoundError):

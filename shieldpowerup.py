@@ -1,4 +1,5 @@
 import pygame
+from asset_utils import load_image_with_aspect_ratio
 
 from circleshape import CircleShape
 from constants import (
@@ -22,12 +23,11 @@ class ShieldPowerUp(CircleShape):
             return None
 
         try:
-            image = pygame.image.load(SHIELD_POWERUP_IMAGE_PATH).convert_alpha()
-            image = pygame.transform.smoothscale(
-                image,
-                (SHIELD_POWERUP_IMAGE_WIDTH, SHIELD_POWERUP_IMAGE_HEIGHT),
+            return load_image_with_aspect_ratio(
+                SHIELD_POWERUP_IMAGE_PATH,
+                SHIELD_POWERUP_IMAGE_WIDTH,
+                SHIELD_POWERUP_IMAGE_HEIGHT,
             )
-            return image
         except (pygame.error, FileNotFoundError):
             return None
 
