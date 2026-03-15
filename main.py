@@ -44,6 +44,7 @@ from constants import (
     GAME_STATE_PLAYING,
     GAME_STATE_PAUSED,
     GAME_STATE_GAME_OVER,
+    GAME_STATE_INSTRUCTIONS,
     SCREEN_TITLE_FONT_SIZE,
     SCREEN_SUBTITLE_FONT_SIZE,
     SCREEN_TEXT_COLOR,
@@ -55,6 +56,7 @@ from constants import (
     PAUSE_SCREEN_SUBTITLE_Y,
     PAUSE_SCREEN_INSTRUCTION_Y,
     PAUSE_SCREEN_SECONDARY_INSTRUCTION_Y,
+    SCREEN_THIRD_INSTRUCTION_Y,
     TITLE_IMAGE_PATH,
     USE_TITLE_IMAGE,
     TITLE_IMAGE_WIDTH,
@@ -66,6 +68,14 @@ from constants import (
     HIGH_SCORE_FILE_PATH,
     START_SCREEN_HIGH_SCORE_Y,
     GAME_OVER_HIGH_SCORE_Y,
+    INSTRUCTIONS_TITLE_Y,
+    INSTRUCTIONS_LINE_1_Y,
+    INSTRUCTIONS_LINE_2_Y,
+    INSTRUCTIONS_LINE_3_Y,
+    INSTRUCTIONS_LINE_4_Y,
+    INSTRUCTIONS_LINE_5_Y,
+    INSTRUCTIONS_LINE_6_Y,
+    INSTRUCTIONS_RETURN_Y,
 )
 from player import Player
 from aksteroidfield import AksteroidField
@@ -234,8 +244,15 @@ def draw_start_screen(screen, title_font, subtitle_font, title_image, high_score
     draw_centered_text(
         screen,
         subtitle_font,
-        "Press Q to Quit",
+        "Press I for Instructions",
         SCREEN_INSTRUCTION_Y,
+        SCREEN_TEXT_COLOR,
+    )
+    draw_centered_text(
+        screen,
+        subtitle_font,
+        "Press Q to Quit",
+        SCREEN_SECONDARY_INSTRUCTION_Y,
         SCREEN_TEXT_COLOR,
     )
 
@@ -273,8 +290,15 @@ def draw_game_over_screen(screen, title_font, subtitle_font, score, high_score, 
     draw_centered_text(
         screen,
         subtitle_font,
-        "Press Q to Quit",
+        "Press I for Instructions",
         SCREEN_SECONDARY_INSTRUCTION_Y,
+        SCREEN_TEXT_COLOR,
+    )
+    draw_centered_text(
+        screen,
+        subtitle_font,
+        "Press Q to Quit",
+        SCREEN_THIRD_INSTRUCTION_Y,
         SCREEN_TEXT_COLOR,
     )
 
@@ -305,8 +329,83 @@ def draw_pause_screen(screen, title_image, title_font, subtitle_font):
     draw_centered_text(
         screen,
         subtitle_font,
-        "Press Q to Quit",
+        "Press I for Instructions",
         PAUSE_SCREEN_SECONDARY_INSTRUCTION_Y,
+        SCREEN_TEXT_COLOR,
+    )
+    draw_centered_text(
+        screen,
+        subtitle_font,
+        "Press Q to Quit",
+        SCREEN_THIRD_INSTRUCTION_Y,
+        SCREEN_TEXT_COLOR,
+    )
+
+
+# INSTRUCTIONS SCREEN
+def draw_instructions_screen(screen, title_image, title_font, subtitle_font):
+    draw_overlay(screen)
+
+    if title_image is not None:
+        title_rect = title_image.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_TITLE_Y))
+        screen.blit(title_image, title_rect)
+    else:
+        draw_centered_text(screen, title_font, "AKSTEROID", SCREEN_TITLE_Y, SCREEN_TEXT_COLOR)
+
+    draw_centered_text(
+        screen,
+        subtitle_font,
+        "INSTRUCTIONS",
+        INSTRUCTIONS_TITLE_Y,
+        SCREEN_TEXT_COLOR,
+    )
+    draw_centered_text(
+        screen,
+        subtitle_font,
+        "W / S = Thrust Forward / Backward",
+        INSTRUCTIONS_LINE_1_Y,
+        SCREEN_TEXT_COLOR,
+    )
+    draw_centered_text(
+        screen,
+        subtitle_font,
+        "A / D = Rotate Left / Right",
+        INSTRUCTIONS_LINE_2_Y,
+        SCREEN_TEXT_COLOR,
+    )
+    draw_centered_text(
+        screen,
+        subtitle_font,
+        "SPACE = Shoot    B = Bomb",
+        INSTRUCTIONS_LINE_3_Y,
+        SCREEN_TEXT_COLOR,
+    )
+    draw_centered_text(
+        screen,
+        subtitle_font,
+        "1 / 2 / 3 = Switch Weapons",
+        INSTRUCTIONS_LINE_4_Y,
+        SCREEN_TEXT_COLOR,
+    )
+    draw_centered_text(
+        screen,
+        subtitle_font,
+        "ESC = Pause / Resume",
+        INSTRUCTIONS_LINE_5_Y,
+        SCREEN_TEXT_COLOR,
+    )
+    draw_centered_text(
+        screen,
+        subtitle_font,
+        "Collect power-ups for speed boosts and shields",
+        INSTRUCTIONS_LINE_6_Y,
+        SCREEN_TEXT_COLOR,
+    )
+    draw_centered_text(
+        screen,
+        subtitle_font,
+        "Press ESC or ENTER to Return",
+        INSTRUCTIONS_RETURN_Y,
         SCREEN_TEXT_COLOR,
     )
 
@@ -384,6 +483,7 @@ def main():
     shield_powerups = pygame.sprite.Group()
 
     game_state = GAME_STATE_START
+    previous_game_state = GAME_STATE_START
     player, score, lives, respawn_invulnerability_timer = reset_game(
         updatable,
         drawable,
@@ -414,16 +514,25 @@ def main():
                             shield_powerups,
                         )
                         game_state = GAME_STATE_PLAYING
+                    elif event.key == pygame.K_i:
+                        previous_game_state = game_state
+                        game_state = GAME_STATE_INSTRUCTIONS
                     elif event.key == pygame.K_q:
                         return
 
                 elif game_state == GAME_STATE_PLAYING:
                     if event.key == pygame.K_ESCAPE:
                         game_state = GAME_STATE_PAUSED
+                    elif event.key == pygame.K_i:
+                        previous_game_state = game_state
+                        game_state = GAME_STATE_INSTRUCTIONS
 
                 elif game_state == GAME_STATE_PAUSED:
                     if event.key == pygame.K_ESCAPE:
                         game_state = GAME_STATE_PLAYING
+                    elif event.key == pygame.K_i:
+                        previous_game_state = game_state
+                        game_state = GAME_STATE_INSTRUCTIONS
                     elif event.key == pygame.K_q:
                         return
 
@@ -439,6 +548,15 @@ def main():
                             shield_powerups,
                         )
                         game_state = GAME_STATE_PLAYING
+                    elif event.key == pygame.K_i:
+                        previous_game_state = game_state
+                        game_state = GAME_STATE_INSTRUCTIONS
+                    elif event.key == pygame.K_q:
+                        return
+
+                elif game_state == GAME_STATE_INSTRUCTIONS:
+                    if event.key == pygame.K_ESCAPE or event.key == pygame.K_RETURN:
+                        game_state = previous_game_state
                     elif event.key == pygame.K_q:
                         return
 
@@ -455,6 +573,12 @@ def main():
 
         if game_state == GAME_STATE_PAUSED:
             draw_pause_screen(screen, title_image, title_font, subtitle_font)
+            pygame.display.flip()
+            dt = clock.tick(60) / 1000
+            continue
+
+        if game_state == GAME_STATE_INSTRUCTIONS:
+            draw_instructions_screen(screen, title_image, title_font, subtitle_font)
             pygame.display.flip()
             dt = clock.tick(60) / 1000
             continue
