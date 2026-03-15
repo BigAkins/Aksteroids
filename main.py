@@ -77,6 +77,7 @@ from constants import (
     INSTRUCTIONS_LINE_6_Y,
     INSTRUCTIONS_RETURN_Y,
 )
+
 from player import Player
 from aksteroidfield import AksteroidField
 from aksteroid import Aksteroid
@@ -85,14 +86,62 @@ from explosion import Explosion
 from speedpowerup import SpeedPowerUp
 from shieldpowerup import ShieldPowerUp
 
+# --- Outlined text constants and helpers ---
+TEXT_OUTLINE_COLOR = (10, 10, 25)
+TEXT_OUTLINE_THICKNESS = 3
+
+
+def create_game_font(size):
+    font_names = ["arialblack", "impact", "bahnschrift", "arial"]
+    for font_name in font_names:
+        matched_font = pygame.font.match_font(font_name)
+        if matched_font is not None:
+            return pygame.font.Font(matched_font, size)
+
+    return pygame.font.Font(None, size)
+
+
+def render_outlined_text(font, text, text_color, outline_color, outline_thickness):
+    base_surface = font.render(text, True, text_color)
+    width = base_surface.get_width() + outline_thickness * 2
+    height = base_surface.get_height() + outline_thickness * 2
+
+    outlined_surface = pygame.Surface((width, height), pygame.SRCALPHA)
+
+    for offset_x in range(-outline_thickness, outline_thickness + 1):
+        for offset_y in range(-outline_thickness, outline_thickness + 1):
+            if offset_x == 0 and offset_y == 0:
+                continue
+
+            outline_surface = font.render(text, True, outline_color)
+            outlined_surface.blit(
+                outline_surface,
+                (offset_x + outline_thickness, offset_y + outline_thickness),
+            )
+
+    outlined_surface.blit(base_surface, (outline_thickness, outline_thickness))
+    return outlined_surface
+
 
 def draw_score(screen, font, score):
-    score_surface = font.render(f"Score: {score}", True, SCORE_COLOR)
+    score_surface = render_outlined_text(
+        font,
+        f"Score: {score}",
+        SCORE_COLOR,
+        TEXT_OUTLINE_COLOR,
+        TEXT_OUTLINE_THICKNESS,
+    )
     screen.blit(score_surface, (SCORE_POSITION_X, SCORE_POSITION_Y))
 
 
 def draw_lives(screen, font, lives):
-    lives_surface = font.render(f"Lives: {lives}", True, SCORE_COLOR)
+    lives_surface = render_outlined_text(
+        font,
+        f"Lives: {lives}",
+        SCORE_COLOR,
+        TEXT_OUTLINE_COLOR,
+        TEXT_OUTLINE_THICKNESS,
+    )
     screen.blit(lives_surface, (LIVES_POSITION_X, LIVES_POSITION_Y))
 
 
@@ -120,7 +169,13 @@ def load_weapon_icons():
 
 def draw_weapon(screen, font, player, weapon_icons):
     weapon_name = player.get_weapon_name()
-    weapon_surface = font.render(f"Weapon: {weapon_name}", True, SCORE_COLOR)
+    weapon_surface = render_outlined_text(
+        font,
+        f"Weapon: {weapon_name}",
+        SCORE_COLOR,
+        TEXT_OUTLINE_COLOR,
+        TEXT_OUTLINE_THICKNESS,
+    )
     screen.blit(weapon_surface, (WEAPON_POSITION_X, WEAPON_POSITION_Y))
 
     weapon_icon = weapon_icons.get(weapon_name)
@@ -147,7 +202,13 @@ def load_bomb_hud_image():
 
 
 def draw_bombs(screen, font, bombs, bomb_image):
-    bombs_surface = font.render(f"Bombs: {bombs}", True, SCORE_COLOR)
+    bombs_surface = render_outlined_text(
+        font,
+        f"Bombs: {bombs}",
+        SCORE_COLOR,
+        TEXT_OUTLINE_COLOR,
+        TEXT_OUTLINE_THICKNESS,
+    )
     screen.blit(bombs_surface, (BOMBS_POSITION_X, BOMBS_POSITION_Y))
 
     if bomb_image is None:
@@ -207,7 +268,13 @@ def save_high_score(high_score):
 
 
 def draw_centered_text(screen, font, text, y, color):
-    text_surface = font.render(text, True, color)
+    text_surface = render_outlined_text(
+        font,
+        text,
+        color,
+        TEXT_OUTLINE_COLOR,
+        TEXT_OUTLINE_THICKNESS,
+    )
     text_rect = text_surface.get_rect(center=(SCREEN_WIDTH / 2, y))
     screen.blit(text_surface, text_rect)
 
@@ -451,9 +518,9 @@ def main():
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     clock = pygame.time.Clock()
-    hud_font = pygame.font.Font(None, SCORE_FONT_SIZE)
-    title_font = pygame.font.Font(None, SCREEN_TITLE_FONT_SIZE)
-    subtitle_font = pygame.font.Font(None, SCREEN_SUBTITLE_FONT_SIZE)
+    hud_font = create_game_font(SCORE_FONT_SIZE)
+    title_font = create_game_font(SCREEN_TITLE_FONT_SIZE)
+    subtitle_font = create_game_font(SCREEN_SUBTITLE_FONT_SIZE)
     bomb_hud_image = load_bomb_hud_image()
     weapon_icons = load_weapon_icons()
     title_image = load_screen_image(
