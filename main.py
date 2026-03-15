@@ -42,6 +42,7 @@ from constants import (
     WEAPON_RAPID_ICON_PATH,
     GAME_STATE_START,
     GAME_STATE_PLAYING,
+    GAME_STATE_PAUSED,
     GAME_STATE_GAME_OVER,
     SCREEN_TITLE_FONT_SIZE,
     SCREEN_SUBTITLE_FONT_SIZE,
@@ -51,6 +52,9 @@ from constants import (
     SCREEN_SUBTITLE_Y,
     SCREEN_INSTRUCTION_Y,
     SCREEN_SECONDARY_INSTRUCTION_Y,
+    PAUSE_SCREEN_SUBTITLE_Y,
+    PAUSE_SCREEN_INSTRUCTION_Y,
+    PAUSE_SCREEN_SECONDARY_INSTRUCTION_Y,
     TITLE_IMAGE_PATH,
     USE_TITLE_IMAGE,
     TITLE_IMAGE_WIDTH,
@@ -275,6 +279,38 @@ def draw_game_over_screen(screen, title_font, subtitle_font, score, high_score, 
     )
 
 
+def draw_pause_screen(screen, title_image, title_font, subtitle_font):
+    draw_overlay(screen)
+
+    if title_image is not None:
+        title_rect = title_image.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_TITLE_Y))
+        screen.blit(title_image, title_rect)
+    else:
+        draw_centered_text(screen, title_font, "AKSTEROID", SCREEN_TITLE_Y, SCREEN_TEXT_COLOR)
+
+    draw_centered_text(
+        screen,
+        subtitle_font,
+        "PAUSED",
+        PAUSE_SCREEN_SUBTITLE_Y,
+        SCREEN_TEXT_COLOR,
+    )
+    draw_centered_text(
+        screen,
+        subtitle_font,
+        "Press ESC to Resume",
+        PAUSE_SCREEN_INSTRUCTION_Y,
+        SCREEN_TEXT_COLOR,
+    )
+    draw_centered_text(
+        screen,
+        subtitle_font,
+        "Press Q to Quit",
+        PAUSE_SCREEN_SECONDARY_INSTRUCTION_Y,
+        SCREEN_TEXT_COLOR,
+    )
+
+
 def reset_game(
     updatable,
     drawable,
@@ -381,6 +417,16 @@ def main():
                     elif event.key == pygame.K_q:
                         return
 
+                elif game_state == GAME_STATE_PLAYING:
+                    if event.key == pygame.K_ESCAPE:
+                        game_state = GAME_STATE_PAUSED
+
+                elif game_state == GAME_STATE_PAUSED:
+                    if event.key == pygame.K_ESCAPE:
+                        game_state = GAME_STATE_PLAYING
+                    elif event.key == pygame.K_q:
+                        return
+
                 elif game_state == GAME_STATE_GAME_OVER:
                     if event.key == pygame.K_r:
                         player, score, lives, respawn_invulnerability_timer = reset_game(
@@ -403,6 +449,12 @@ def main():
 
         if game_state == GAME_STATE_START:
             draw_start_screen(screen, title_font, subtitle_font, title_image, high_score)
+            pygame.display.flip()
+            dt = clock.tick(60) / 1000
+            continue
+
+        if game_state == GAME_STATE_PAUSED:
+            draw_pause_screen(screen, title_image, title_font, subtitle_font)
             pygame.display.flip()
             dt = clock.tick(60) / 1000
             continue
