@@ -154,7 +154,7 @@ def render_outlined_text(font, text, text_color, outline_color, outline_thicknes
     return outlined_surface
 
 
-def draw_score(screen, font, score, offset_x=0, offset_y=0):
+def draw_score(screen, font, score, offset_x: float = 0, offset_y: float = 0):
     score_surface = render_outlined_text(
         font,
         f"Score: {score}",
@@ -165,7 +165,7 @@ def draw_score(screen, font, score, offset_x=0, offset_y=0):
     screen.blit(score_surface, (SCORE_POSITION_X + offset_x, SCORE_POSITION_Y + offset_y))
 
 
-def draw_lives(screen, font, lives, offset_x=0, offset_y=0):
+def draw_lives(screen, font, lives, offset_x: float = 0, offset_y: float = 0):
     lives_surface = render_outlined_text(
         font,
         f"Lives: {lives}",
@@ -198,7 +198,7 @@ def load_weapon_icons():
     }
 
 
-def draw_weapon(screen, font, player, weapon_icons, offset_x=0, offset_y=0):
+def draw_weapon(screen, font, player, weapon_icons, offset_x: float = 0, offset_y: float = 0):
     weapon_name = player.get_weapon_name()
     weapon_surface = render_outlined_text(
         font,
@@ -232,7 +232,7 @@ def load_bomb_hud_image():
         return None
 
 
-def draw_bombs(screen, font, bombs, bomb_image, offset_x=0, offset_y=0):
+def draw_bombs(screen, font, bombs, bomb_image, offset_x: float = 0, offset_y: float = 0):
     bombs_surface = render_outlined_text(
         font,
         f"Bombs: {bombs}",
@@ -359,7 +359,7 @@ def spawn_bomb_powerup(bomb_powerups):
     BombPowerUp(spawn_x, spawn_y)
 
 
-def draw_centered_text(screen, font, text, y, color, offset_x=0, offset_y=0):
+def draw_centered_text(screen, font, text, y, color, offset_x: float = 0, offset_y: float = 0):
     text_surface = render_outlined_text(
         font,
         text,
@@ -377,7 +377,7 @@ def draw_overlay(screen):
     screen.blit(overlay, (0, 0))
 
 
-def draw_start_screen(screen, title_font, subtitle_font, title_image, high_score, offset_x=0, offset_y=0):
+def draw_start_screen(screen, title_font, subtitle_font, title_image, high_score, offset_x: float = 0, offset_y: float = 0):
     draw_overlay(screen)
 
     if title_image is not None:
@@ -424,7 +424,7 @@ def draw_start_screen(screen, title_font, subtitle_font, title_image, high_score
     )
 
 
-def draw_game_over_screen(screen, title_font, subtitle_font, score, high_score, game_over_image, offset_x=0, offset_y=0):
+def draw_game_over_screen(screen, title_font, subtitle_font, score, high_score, game_over_image, offset_x: float = 0, offset_y: float = 0):
     draw_overlay(screen)
 
     if game_over_image is not None:
@@ -480,7 +480,7 @@ def draw_game_over_screen(screen, title_font, subtitle_font, score, high_score, 
     )
 
 
-def draw_pause_screen(screen, title_image, title_font, subtitle_font, offset_x=0, offset_y=0):
+def draw_pause_screen(screen, title_image, title_font, subtitle_font, offset_x: float = 0, offset_y: float = 0):
     draw_overlay(screen)
 
     if title_image is not None:
@@ -528,7 +528,7 @@ def draw_pause_screen(screen, title_image, title_font, subtitle_font, offset_x=0
 
 
 # INSTRUCTIONS SCREEN
-def draw_instructions_screen(screen, title_image, title_font, subtitle_font, offset_x=0, offset_y=0):
+def draw_instructions_screen(screen, title_image, title_font, subtitle_font, offset_x: float = 0, offset_y: float = 0):
     draw_overlay(screen)
 
     if title_image is not None:
@@ -613,7 +613,7 @@ def add_screen_shake(current_timer, current_intensity, duration, intensity):
     return max(current_timer, duration), max(current_intensity, intensity)
 
 
-def get_screen_shake_offset(shake_timer, shake_intensity):
+def get_screen_shake_offset(shake_timer, shake_intensity) -> tuple[float, float]:
     if not SCREEN_SHAKE_ENABLED or shake_timer <= 0 or shake_intensity <= 0:
         return 0, 0
 

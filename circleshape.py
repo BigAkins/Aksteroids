@@ -1,15 +1,19 @@
+from typing import Any, ClassVar
+
 import pygame
 from constants import SCREEN_WIDTH, SCREEN_HEIGHT
 
 
 # Base class for game objects
 class CircleShape(pygame.sprite.Sprite):
-    def __init__(self, x, y, radius):
-        # we will be using this later
-        if hasattr(self, "containers"):
-            super().__init__(self.containers)
-        else:
-            super().__init__()
+    containers: ClassVar[tuple[pygame.sprite.AbstractGroup[Any], ...]] = ()
+
+    position: pygame.Vector2
+    velocity: pygame.Vector2
+    radius: float
+
+    def __init__(self, x: float, y: float, radius: float):
+        super().__init__(*self.containers)
 
         self.position = pygame.Vector2(x, y)
         self.velocity = pygame.Vector2(0, 0)

@@ -1,3 +1,5 @@
+from typing import Any, ClassVar
+
 import math
 import random
 import pygame
@@ -15,11 +17,10 @@ from constants import (
 
 
 class Explosion(pygame.sprite.Sprite):
+    containers: ClassVar[tuple[pygame.sprite.AbstractGroup[Any], ...]] = ()
+
     def __init__(self, x, y, source_radius):
-        if hasattr(self, "containers"):
-            super().__init__(self.containers)
-        else:
-            super().__init__()
+        super().__init__(*self.containers)
 
         self.position = pygame.Vector2(x, y)
         self.source_radius = source_radius
