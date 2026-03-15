@@ -1,4 +1,5 @@
 import pygame
+from audio_manager import AudioManager
 import random
 from asset_utils import load_image_with_aspect_ratio
 from logger import log_state, log_event
@@ -67,6 +68,15 @@ from constants import (
     GAME_OVER_IMAGE_WIDTH,
     GAME_OVER_IMAGE_HEIGHT,
     HIGH_SCORE_FILE_PATH,
+    MENU_MUSIC_PATH,
+    GAMEPLAY_MUSIC_PATH,
+    SOUND_SHOOT_PATH,
+    SOUND_EXPLOSION_PATH,
+    SOUND_POWERUP_PICKUP_PATH,
+    SOUND_BOMB_PATH,
+    SOUND_PLAYER_HIT_PATH,
+    SOUND_MENU_START_PATH,
+    SOUND_GAME_OVER_PATH,
     START_SCREEN_HIGH_SCORE_Y,
     GAME_OVER_HIGH_SCORE_Y,
     INSTRUCTIONS_TITLE_Y,
@@ -561,6 +571,15 @@ def reset_game(
 
 def main():
     pygame.init()
+    audio_manager = AudioManager()
+    audio_manager.load_sound("shoot", SOUND_SHOOT_PATH)
+    audio_manager.load_sound("explosion", SOUND_EXPLOSION_PATH)
+    audio_manager.load_sound("powerup_pickup", SOUND_POWERUP_PICKUP_PATH)
+    audio_manager.load_sound("bomb", SOUND_BOMB_PATH)
+    audio_manager.load_sound("player_hit", SOUND_PLAYER_HIT_PATH)
+    audio_manager.load_sound("menu_start", SOUND_MENU_START_PATH)
+    audio_manager.load_sound("game_over", SOUND_GAME_OVER_PATH)
+    audio_manager.play_music(MENU_MUSIC_PATH)
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     clock = pygame.time.Clock()
     hud_font = create_game_font(SCORE_FONT_SIZE)
@@ -617,6 +636,8 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if game_state == GAME_STATE_START:
                     if event.key == pygame.K_RETURN:
+                        audio_manager.play_sound("menu_start")
+                        audio_manager.play_music(GAMEPLAY_MUSIC_PATH, force_restart=True)
                         player, score, lives, respawn_invulnerability_timer = reset_game(
                             updatable,
                             drawable,
@@ -637,6 +658,7 @@ def main():
                 elif game_state == GAME_STATE_PLAYING:
                     if event.key == pygame.K_ESCAPE:
                         game_state = GAME_STATE_PAUSED
+                        audio_manager.play_music(MENU_MUSIC_PATH)
                     elif event.key == pygame.K_i:
                         previous_game_state = game_state
                         game_state = GAME_STATE_INSTRUCTIONS
@@ -644,6 +666,7 @@ def main():
                 elif game_state == GAME_STATE_PAUSED:
                     if event.key == pygame.K_ESCAPE:
                         game_state = GAME_STATE_PLAYING
+                        audio_manager.play_music(GAMEPLAY_MUSIC_PATH)
                     elif event.key == pygame.K_i:
                         previous_game_state = game_state
                         game_state = GAME_STATE_INSTRUCTIONS
@@ -652,6 +675,8 @@ def main():
 
                 elif game_state == GAME_STATE_GAME_OVER:
                     if event.key == pygame.K_r:
+                        audio_manager.play_sound("menu_start")
+                        audio_manager.play_music(GAMEPLAY_MUSIC_PATH, force_restart=True)
                         player, score, lives, respawn_invulnerability_timer = reset_game(
                             updatable,
                             drawable,
@@ -672,6 +697,11 @@ def main():
                 elif game_state == GAME_STATE_INSTRUCTIONS:
                     if event.key == pygame.K_ESCAPE or event.key == pygame.K_RETURN:
                         game_state = previous_game_state
+
+                        if previous_game_state == GAME_STATE_PLAYING:
+                            audio_manager.play_music(GAMEPLAY_MUSIC_PATH)
+                        else:
+                            audio_manager.play_music(MENU_MUSIC_PATH)
                     elif event.key == pygame.K_q:
                         return
 
@@ -704,7 +734,10 @@ def main():
             dt = clock.tick(60) / 1000
             continue
 
+        shots_before_update = len(shots)
         updatable.update(dt)
+        if len(shots) > shots_before_update:
+            audio_manager.play_sound("shoot")
 
         powerup_spawn_timer -= dt
         if powerup_spawn_timer <= 0:
@@ -715,16 +748,22 @@ def main():
             if speed_powerup.collides_with(player):
                 player.activate_speed_powerup()
                 speed_powerup.kill()
+                audio_manager.play_sound("powerup_pickup")
                 break
 
         for shield_powerup in shield_powerups:
             if shield_powerup.collides_with(player):
                 player.activate_shield()
                 shield_powerup.kill()
+                audio_manager.play_sound("powerup_pickup")
                 break
 
         if player.trigger_bomb:
+            audio_manager.play_sound("bomb")
             aksteroids_to_bomb = list(aksteroids)
+
+            if aksteroids_to_bomb:
+                audio_manager.play_sound("explosion")
 
             for aksteroid in aksteroids_to_bomb:
                 hit_position = aksteroid.position.copy()
@@ -746,6 +785,7 @@ def main():
                     break
 
                 log_event("player_hit")
+                audio_manager.play_sound("player_hit")
                 lives -= 1
 
                 if lives <= 0:
@@ -753,6 +793,8 @@ def main():
                         high_score = score
                         save_high_score(high_score)
 
+                    audio_manager.play_sound("game_over")
+                    audio_manager.play_music(MENU_MUSIC_PATH, force_restart=True)
                     game_state = GAME_STATE_GAME_OVER
                     break
 
@@ -764,6 +806,7 @@ def main():
             for shot in shots:
                 if aksteroid.collides_with(shot):
                     log_event("aksteroid_shot")
+                    audio_manager.play_sound("explosion")
                     score += SCORE_PER_AKSTEROID
 
                     hit_position = aksteroid.position.copy()

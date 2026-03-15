@@ -147,3 +147,17 @@ POWERUP_DRIFT_SPEED_MAX = 80
 POWERUP_SPAWN_MARGIN = 120
 POWERUP_SPEED_WEIGHT = 0.5
 POWERUP_SHIELD_WEIGHT = 0.5
+# Audio configuration constants
+AUDIO_ENABLED = True
+MUSIC_ENABLED = True
+SOUND_VOLUME = 0.45
+MUSIC_VOLUME = 0.30
+MENU_MUSIC_PATH = "assets/audio/menu_music.wav"
+GAMEPLAY_MUSIC_PATH = "assets/audio/gameplay_music.wav"
+SOUND_SHOOT_PATH = "assets/audio/shoot.ogg"
+SOUND_EXPLOSION_PATH = "assets/audio/explosion.ogg"
+SOUND_POWERUP_PICKUP_PATH = "assets/audio/powerup_pickup.ogg"
+SOUND_BOMB_PATH = "assets/audio/bomb.ogg"
+SOUND_PLAYER_HIT_PATH = "assets/audio/player_hit.ogg"
+SOUND_MENU_START_PATH = "assets/audio/menu_start.ogg"
+SOUND_GAME_OVER_PATH = "assets/audio/game_over.ogg"
