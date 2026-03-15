@@ -13,7 +13,7 @@ wheels/
 # Logs
 game_state.jsonl
 game_events.jsonl
-
+.DS_Store
 dist/
 build/
 release/
