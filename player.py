@@ -157,6 +157,9 @@ class Player(CircleShape):
         self.bombs -= 1
         return True
 
+    def add_bomb(self, amount=1):
+        self.bombs += amount
+
     def switch_weapon(self, weapon_name):
         self.current_weapon = weapon_name
 

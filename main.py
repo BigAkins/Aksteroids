@@ -87,6 +87,10 @@ from constants import (
     INSTRUCTIONS_LINE_5_Y,
     INSTRUCTIONS_LINE_6_Y,
     INSTRUCTIONS_RETURN_Y,
+    BOMB_POWERUP_SPAWN_INTERVAL_MIN_SECONDS,
+    BOMB_POWERUP_SPAWN_INTERVAL_MAX_SECONDS,
+    BOMB_POWERUP_MAX_ACTIVE,
+    TOTAL_BOMB_PICKUPS_AVAILABLE,
 )
 
 from player import Player
@@ -96,6 +100,7 @@ from shot import Shot
 from explosion import Explosion
 from speedpowerup import SpeedPowerUp
 from shieldpowerup import ShieldPowerUp
+from bombpowerup import BombPowerUp
 
 # --- Outlined text constants and helpers ---
 TEXT_OUTLINE_COLOR = (10, 10, 25)
@@ -324,6 +329,29 @@ def spawn_random_powerup(speed_powerups, shield_powerups):
         ShieldPowerUp(spawn_x, spawn_y)
 
 
+def get_next_bomb_powerup_spawn_time():
+    return random.uniform(
+        BOMB_POWERUP_SPAWN_INTERVAL_MIN_SECONDS,
+        BOMB_POWERUP_SPAWN_INTERVAL_MAX_SECONDS,
+    )
+
+
+def spawn_bomb_powerup(bomb_powerups):
+    if len(bomb_powerups) >= BOMB_POWERUP_MAX_ACTIVE:
+        return
+
+    spawn_x = random.uniform(
+        POWERUP_SPAWN_MARGIN,
+        SCREEN_WIDTH - POWERUP_SPAWN_MARGIN,
+    )
+    spawn_y = random.uniform(
+        POWERUP_SPAWN_MARGIN,
+        SCREEN_HEIGHT - POWERUP_SPAWN_MARGIN,
+    )
+
+    BombPowerUp(spawn_x, spawn_y)
+
+
 def draw_centered_text(screen, font, text, y, color):
     text_surface = render_outlined_text(
         font,
@@ -542,6 +570,7 @@ def reset_game(
     explosions,
     speed_powerups,
     shield_powerups,
+    bomb_powerups,
 ):
     updatable.empty()
     drawable.empty()
@@ -550,6 +579,7 @@ def reset_game(
     explosions.empty()
     speed_powerups.empty()
     shield_powerups.empty()
+    bomb_powerups.empty()
 
     AksteroidField.containers = (updatable,)
     Aksteroid.containers = (aksteroids, updatable, drawable)
@@ -557,6 +587,7 @@ def reset_game(
     Explosion.containers = (explosions, updatable, drawable)
     SpeedPowerUp.containers = (speed_powerups, updatable, drawable)
     ShieldPowerUp.containers = (shield_powerups, updatable, drawable)
+    BombPowerUp.containers = (bomb_powerups, updatable, drawable)
     Player.containers = (updatable, drawable)
 
     _aksteroid_field = AksteroidField()
@@ -566,7 +597,8 @@ def reset_game(
     lives = PLAYER_STARTING_LIVES
     respawn_invulnerability_timer = 0
 
-    return player, score, lives, respawn_invulnerability_timer
+    bomb_pickups_remaining = TOTAL_BOMB_PICKUPS_AVAILABLE
+    return player, score, lives, respawn_invulnerability_timer, bomb_pickups_remaining
 
 
 def main():
@@ -612,10 +644,11 @@ def main():
     explosions = pygame.sprite.Group()
     speed_powerups = pygame.sprite.Group()
     shield_powerups = pygame.sprite.Group()
+    bomb_powerups = pygame.sprite.Group()
 
     game_state = GAME_STATE_START
     previous_game_state = GAME_STATE_START
-    player, score, lives, respawn_invulnerability_timer = reset_game(
+    player, score, lives, respawn_invulnerability_timer, bomb_pickups_remaining = reset_game(
         updatable,
         drawable,
         aksteroids,
@@ -623,8 +656,10 @@ def main():
         explosions,
         speed_powerups,
         shield_powerups,
+        bomb_powerups,
     )
     powerup_spawn_timer = get_next_powerup_spawn_time()
+    bomb_powerup_spawn_timer = get_next_bomb_powerup_spawn_time()
 
     while True:
         log_state()
@@ -638,7 +673,7 @@ def main():
                     if event.key == pygame.K_RETURN:
                         audio_manager.play_sound("menu_start")
                         audio_manager.play_music(GAMEPLAY_MUSIC_PATH, force_restart=True)
-                        player, score, lives, respawn_invulnerability_timer = reset_game(
+                        player, score, lives, respawn_invulnerability_timer, bomb_pickups_remaining = reset_game(
                             updatable,
                             drawable,
                             aksteroids,
@@ -646,8 +681,10 @@ def main():
                             explosions,
                             speed_powerups,
                             shield_powerups,
+                            bomb_powerups,
                         )
                         powerup_spawn_timer = get_next_powerup_spawn_time()
+                        bomb_powerup_spawn_timer = get_next_bomb_powerup_spawn_time()
                         game_state = GAME_STATE_PLAYING
                     elif event.key == pygame.K_i:
                         previous_game_state = game_state
@@ -677,7 +714,7 @@ def main():
                     if event.key == pygame.K_r:
                         audio_manager.play_sound("menu_start")
                         audio_manager.play_music(GAMEPLAY_MUSIC_PATH, force_restart=True)
-                        player, score, lives, respawn_invulnerability_timer = reset_game(
+                        player, score, lives, respawn_invulnerability_timer, bomb_pickups_remaining = reset_game(
                             updatable,
                             drawable,
                             aksteroids,
@@ -685,8 +722,10 @@ def main():
                             explosions,
                             speed_powerups,
                             shield_powerups,
+                            bomb_powerups,
                         )
                         powerup_spawn_timer = get_next_powerup_spawn_time()
+                        bomb_powerup_spawn_timer = get_next_bomb_powerup_spawn_time()
                         game_state = GAME_STATE_PLAYING
                     elif event.key == pygame.K_i:
                         previous_game_state = game_state
@@ -744,6 +783,16 @@ def main():
             spawn_random_powerup(speed_powerups, shield_powerups)
             powerup_spawn_timer = get_next_powerup_spawn_time()
 
+        bomb_powerup_spawn_timer -= dt
+        if (
+            player.bombs <= 0
+            and bomb_pickups_remaining > 0
+            and len(bomb_powerups) < BOMB_POWERUP_MAX_ACTIVE
+            and bomb_powerup_spawn_timer <= 0
+        ):
+            spawn_bomb_powerup(bomb_powerups)
+            bomb_powerup_spawn_timer = get_next_bomb_powerup_spawn_time()
+
         for speed_powerup in speed_powerups:
             if speed_powerup.collides_with(player):
                 player.activate_speed_powerup()
@@ -755,6 +804,14 @@ def main():
             if shield_powerup.collides_with(player):
                 player.activate_shield()
                 shield_powerup.kill()
+                audio_manager.play_sound("powerup_pickup")
+                break
+
+        for bomb_powerup in bomb_powerups:
+            if bomb_powerup.collides_with(player):
+                player.add_bomb(1)
+                bomb_powerup.kill()
+                bomb_pickups_remaining -= 1
                 audio_manager.play_sound("powerup_pickup")
                 break
 
