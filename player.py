@@ -19,6 +19,7 @@ from constants import (
     SPEED_POWERUP_DURATION_SECONDS,
     SPEED_POWERUP_ACCELERATION_MULTIPLIER,
     SPEED_POWERUP_MAX_SPEED_MULTIPLIER,
+    PLAYER_STARTING_BOMBS,
 )
 import pygame
 from shot import Shot
@@ -31,6 +32,9 @@ class Player(CircleShape):
         self.player_image = self.load_player_image()
         self.speed_powerup_timer = 0
         self.shield_active = False
+        self.bombs = PLAYER_STARTING_BOMBS
+        self.bomb_pressed_last_frame = False
+        self.trigger_bomb = False
 
     def load_player_image(self):
         if not USE_PLAYER_IMAGE:
@@ -88,6 +92,16 @@ class Player(CircleShape):
             return False
 
         self.shield_active = False
+        return True
+
+    def can_use_bomb(self):
+        return self.bombs > 0
+
+    def use_bomb(self):
+        if not self.can_use_bomb():
+            return False
+
+        self.bombs -= 1
         return True
 
     def get_current_acceleration(self):
@@ -150,6 +164,14 @@ class Player(CircleShape):
             self.accelerate(-PLAYER_REVERSE_ACCELERATION, dt)
         if keys[pygame.K_SPACE]:
             self.shoot()
+
+        bomb_pressed = keys[pygame.K_b]
+        self.trigger_bomb = False
+
+        if bomb_pressed and not self.bomb_pressed_last_frame:
+            self.trigger_bomb = self.use_bomb()
+
+        self.bomb_pressed_last_frame = bomb_pressed
         
         self.apply_drag()
         self.move(dt)

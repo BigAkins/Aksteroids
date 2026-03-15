@@ -20,6 +20,14 @@ from constants import (
     SPEED_POWERUP_SPAWN_Y,
     SHIELD_POWERUP_SPAWN_X,
     SHIELD_POWERUP_SPAWN_Y,
+    BOMB_SCORE_PER_AKSTEROID,
+    BOMBS_POSITION_X,
+    BOMBS_POSITION_Y,
+    BOMB_HUD_IMAGE_PATH,
+    USE_BOMB_HUD_IMAGE,
+    BOMB_HUD_IMAGE_WIDTH,
+    BOMB_HUD_IMAGE_HEIGHT,
+    BOMB_HUD_IMAGE_SPACING,
 )
 from player import Player
 from aksteroidfield import AksteroidField
@@ -36,6 +44,42 @@ def draw_score(screen, font, score):
 def draw_lives(screen, font, lives):
     lives_surface = font.render(f"Lives: {lives}", True, SCORE_COLOR)
     screen.blit(lives_surface, (LIVES_POSITION_X, LIVES_POSITION_Y))
+
+
+def load_bomb_hud_image():
+    if not USE_BOMB_HUD_IMAGE:
+        return None
+
+    try:
+        bomb_image = pygame.image.load(BOMB_HUD_IMAGE_PATH).convert_alpha()
+        bomb_image = pygame.transform.smoothscale(
+            bomb_image,
+            (BOMB_HUD_IMAGE_WIDTH, BOMB_HUD_IMAGE_HEIGHT),
+        )
+        return bomb_image
+    except (pygame.error, FileNotFoundError):
+        return None
+
+
+def draw_bombs(screen, font, bombs, bomb_image):
+    bombs_surface = font.render(f"Bombs: {bombs}", True, SCORE_COLOR)
+    screen.blit(bombs_surface, (BOMBS_POSITION_X, BOMBS_POSITION_Y))
+
+    if bomb_image is None:
+        return
+
+    text_width = bombs_surface.get_width()
+    image_x = BOMBS_POSITION_X + text_width + BOMB_HUD_IMAGE_SPACING
+    image_y = BOMBS_POSITION_Y + (bombs_surface.get_height() - BOMB_HUD_IMAGE_HEIGHT) / 2
+
+    for bomb_index in range(bombs):
+        screen.blit(
+            bomb_image,
+            (
+                image_x + bomb_index * (BOMB_HUD_IMAGE_WIDTH + BOMB_HUD_IMAGE_SPACING),
+                image_y,
+            ),
+        )
 
 def load_background():
     if not USE_BACKGROUND_IMAGE:
@@ -54,6 +98,7 @@ def main():
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     clock = pygame.time.Clock()
     hud_font = pygame.font.Font(None, SCORE_FONT_SIZE)
+    bomb_hud_image = load_bomb_hud_image()
     score = 0
     lives = PLAYER_STARTING_LIVES
     respawn_invulnerability_timer = 0
@@ -108,6 +153,17 @@ def main():
                 shield_powerup.kill()
                 break
 
+        if player.trigger_bomb:
+            aksteroids_to_bomb = list(aksteroids)
+
+            for aksteroid in aksteroids_to_bomb:
+                hit_position = aksteroid.position.copy()
+                hit_radius = aksteroid.radius
+
+                Explosion(hit_position.x, hit_position.y, hit_radius)
+                score += BOMB_SCORE_PER_AKSTEROID
+                aksteroid.split()
+
         if respawn_invulnerability_timer > 0:
             respawn_invulnerability_timer -= dt
             if respawn_invulnerability_timer < 0:
@@ -148,8 +204,8 @@ def main():
             obj.draw(screen)
 
         draw_score(screen, hud_font, score)
-
         draw_lives(screen, hud_font, lives)
+        draw_bombs(screen, hud_font, player.bombs, bomb_hud_image)
 
         pygame.display.flip()
         dt = clock.tick(60) / 1000
