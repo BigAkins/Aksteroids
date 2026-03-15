@@ -692,6 +692,7 @@ def main():
     audio_manager.load_sound("game_over", SOUND_GAME_OVER_PATH)
     audio_manager.play_music(MENU_MUSIC_PATH)
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_caption("Aksteroid")
     clock = pygame.time.Clock()
     hud_font = create_game_font(SCORE_FONT_SIZE)
     title_font = create_game_font(SCREEN_TITLE_FONT_SIZE)
