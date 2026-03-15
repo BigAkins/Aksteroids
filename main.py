@@ -237,13 +237,6 @@ def draw_start_screen(screen, title_font, subtitle_font, title_image, high_score
     draw_centered_text(
         screen,
         subtitle_font,
-        f"High Score: {high_score}",
-        START_SCREEN_HIGH_SCORE_Y,
-        SCREEN_TEXT_COLOR,
-    )
-    draw_centered_text(
-        screen,
-        subtitle_font,
         "Press I for Instructions",
         SCREEN_INSTRUCTION_Y,
         SCREEN_TEXT_COLOR,
@@ -253,6 +246,13 @@ def draw_start_screen(screen, title_font, subtitle_font, title_image, high_score
         subtitle_font,
         "Press Q to Quit",
         SCREEN_SECONDARY_INSTRUCTION_Y,
+        SCREEN_TEXT_COLOR,
+    )
+    draw_centered_text(
+        screen,
+        subtitle_font,
+        f"High Score: {high_score}",
+        START_SCREEN_HIGH_SCORE_Y,
         SCREEN_TEXT_COLOR,
     )
 
@@ -276,13 +276,6 @@ def draw_game_over_screen(screen, title_font, subtitle_font, score, high_score, 
     draw_centered_text(
         screen,
         subtitle_font,
-        f"High Score: {high_score}",
-        GAME_OVER_HIGH_SCORE_Y,
-        SCREEN_TEXT_COLOR,
-    )
-    draw_centered_text(
-        screen,
-        subtitle_font,
         "Press R to Restart",
         SCREEN_INSTRUCTION_Y,
         SCREEN_TEXT_COLOR,
@@ -299,6 +292,13 @@ def draw_game_over_screen(screen, title_font, subtitle_font, score, high_score, 
         subtitle_font,
         "Press Q to Quit",
         SCREEN_THIRD_INSTRUCTION_Y,
+        SCREEN_TEXT_COLOR,
+    )
+    draw_centered_text(
+        screen,
+        subtitle_font,
+        f"High Score: {high_score}",
+        GAME_OVER_HIGH_SCORE_Y,
         SCREEN_TEXT_COLOR,
     )
 
@@ -356,7 +356,7 @@ def draw_instructions_screen(screen, title_image, title_font, subtitle_font):
         screen,
         subtitle_font,
         "INSTRUCTIONS",
-        INSTRUCTIONS_TITLE_Y,
+        INSTRUCTIONS_TITLE_Y + 20,
         SCREEN_TEXT_COLOR,
     )
     draw_centered_text(
