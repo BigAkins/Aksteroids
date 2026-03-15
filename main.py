@@ -51,6 +51,14 @@ from constants import (
     SCREEN_SUBTITLE_Y,
     SCREEN_INSTRUCTION_Y,
     SCREEN_SECONDARY_INSTRUCTION_Y,
+    TITLE_IMAGE_PATH,
+    USE_TITLE_IMAGE,
+    TITLE_IMAGE_WIDTH,
+    TITLE_IMAGE_HEIGHT,
+    GAME_OVER_IMAGE_PATH,
+    USE_GAME_OVER_IMAGE,
+    GAME_OVER_IMAGE_WIDTH,
+    GAME_OVER_IMAGE_HEIGHT,
 )
 from player import Player
 from aksteroidfield import AksteroidField
@@ -154,6 +162,20 @@ def load_background():
         return None
 
 
+def load_screen_image(image_path, use_image, max_width, max_height):
+    if not use_image:
+        return None
+
+    try:
+        return load_image_with_aspect_ratio(
+            image_path,
+            max_width,
+            max_height,
+        )
+    except (pygame.error, FileNotFoundError):
+        return None
+
+
 def draw_centered_text(screen, font, text, y, color):
     text_surface = font.render(text, True, color)
     text_rect = text_surface.get_rect(center=(SCREEN_WIDTH / 2, y))
@@ -166,9 +188,15 @@ def draw_overlay(screen):
     screen.blit(overlay, (0, 0))
 
 
-def draw_start_screen(screen, title_font, subtitle_font):
+def draw_start_screen(screen, title_font, subtitle_font, title_image):
     draw_overlay(screen)
-    draw_centered_text(screen, title_font, "AKSTEROIDS", SCREEN_TITLE_Y, SCREEN_TEXT_COLOR)
+
+    if title_image is not None:
+        title_rect = title_image.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_TITLE_Y))
+        screen.blit(title_image, title_rect)
+    else:
+        draw_centered_text(screen, title_font, "AKSTEROID", SCREEN_TITLE_Y, SCREEN_TEXT_COLOR)
+
     draw_centered_text(
         screen,
         subtitle_font,
@@ -185,9 +213,15 @@ def draw_start_screen(screen, title_font, subtitle_font):
     )
 
 
-def draw_game_over_screen(screen, title_font, subtitle_font, score):
+def draw_game_over_screen(screen, title_font, subtitle_font, score, game_over_image):
     draw_overlay(screen)
-    draw_centered_text(screen, title_font, "GAME OVER", SCREEN_TITLE_Y, SCREEN_TEXT_COLOR)
+
+    if game_over_image is not None:
+        game_over_rect = game_over_image.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_TITLE_Y))
+        screen.blit(game_over_image, game_over_rect)
+    else:
+        draw_centered_text(screen, title_font, "GAME OVER", SCREEN_TITLE_Y, SCREEN_TEXT_COLOR)
+
     draw_centered_text(
         screen,
         subtitle_font,
@@ -257,6 +291,18 @@ def main():
     subtitle_font = pygame.font.Font(None, SCREEN_SUBTITLE_FONT_SIZE)
     bomb_hud_image = load_bomb_hud_image()
     weapon_icons = load_weapon_icons()
+    title_image = load_screen_image(
+        TITLE_IMAGE_PATH,
+        USE_TITLE_IMAGE,
+        TITLE_IMAGE_WIDTH,
+        TITLE_IMAGE_HEIGHT,
+    )
+    game_over_image = load_screen_image(
+        GAME_OVER_IMAGE_PATH,
+        USE_GAME_OVER_IMAGE,
+        GAME_OVER_IMAGE_WIDTH,
+        GAME_OVER_IMAGE_HEIGHT,
+    )
     background = load_background()
     dt = 0
     print(f"Starting Aksteroids with pygame version: {pygame.version.ver}")
@@ -325,13 +371,13 @@ def main():
             screen.fill(BACKGROUND_COLOR)
 
         if game_state == GAME_STATE_START:
-            draw_start_screen(screen, title_font, subtitle_font)
+            draw_start_screen(screen, title_font, subtitle_font, title_image)
             pygame.display.flip()
             dt = clock.tick(60) / 1000
             continue
 
         if game_state != GAME_STATE_PLAYING:
-            draw_game_over_screen(screen, title_font, subtitle_font, score)
+            draw_game_over_screen(screen, title_font, subtitle_font, score, game_over_image)
             pygame.display.flip()
             dt = clock.tick(60) / 1000
             continue
