@@ -13,3 +13,10 @@ wheels/
 # Logs
 game_state.jsonl
 game_events.jsonl
+
+dist/
+build/
+release/
+*.app
+*.zip
+*.spec
