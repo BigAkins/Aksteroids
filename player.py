@@ -20,6 +20,16 @@ from constants import (
     SPEED_POWERUP_ACCELERATION_MULTIPLIER,
     SPEED_POWERUP_MAX_SPEED_MULTIPLIER,
     PLAYER_STARTING_BOMBS,
+    WEAPON_NORMAL,
+    WEAPON_SPREAD,
+    WEAPON_RAPID,
+    SPREAD_SHOT_ANGLE,
+    NORMAL_WEAPON_COOLDOWN,
+    NORMAL_WEAPON_SHOT_SPEED,
+    SPREAD_WEAPON_COOLDOWN,
+    SPREAD_WEAPON_SHOT_SPEED,
+    RAPID_WEAPON_COOLDOWN,
+    RAPID_WEAPON_SHOT_SPEED,
 )
 import pygame
 from shot import Shot
@@ -35,6 +45,7 @@ class Player(CircleShape):
         self.bombs = PLAYER_STARTING_BOMBS
         self.bomb_pressed_last_frame = False
         self.trigger_bomb = False
+        self.current_weapon = WEAPON_NORMAL
 
     def load_player_image(self):
         if not USE_PLAYER_IMAGE:
@@ -104,6 +115,19 @@ class Player(CircleShape):
         self.bombs -= 1
         return True
 
+    def switch_weapon(self, weapon_name):
+        self.current_weapon = weapon_name
+
+    def get_weapon_name(self):
+        return self.current_weapon
+
+    def get_current_weapon_cooldown(self):
+        if self.current_weapon == WEAPON_SPREAD:
+            return SPREAD_WEAPON_COOLDOWN
+        if self.current_weapon == WEAPON_RAPID:
+            return RAPID_WEAPON_COOLDOWN
+        return NORMAL_WEAPON_COOLDOWN
+
     def get_current_acceleration(self):
         if self.speed_powerup_timer > 0:
             return PLAYER_ACCELERATION * SPEED_POWERUP_ACCELERATION_MULTIPLIER
@@ -132,15 +156,28 @@ class Player(CircleShape):
         if self.velocity.length() < PLAYER_MIN_VELOCITY:
             self.velocity = pygame.Vector2(0, 0)
 
+    def spawn_shot(self, angle_offset, shot_speed):
+        shot = Shot(self.position.x, self.position.y)
+        direction = pygame.Vector2(0, 1).rotate(self.rotation + angle_offset)
+        shot.velocity = direction * shot_speed
+
     def shoot(self):
         if self.shot_cooldown > 0:
             return
 
-        self.shot_cooldown = PLAYER_SHOOT_COOLDOWN_SECONDS
+        self.shot_cooldown = self.get_current_weapon_cooldown()
 
-        shot = Shot(self.position.x, self.position.y)
-        direction = pygame.Vector2(0, 1).rotate(self.rotation)
-        shot.velocity = direction * PLAYER_SHOOT_SPEED
+        if self.current_weapon == WEAPON_SPREAD:
+            self.spawn_shot(-SPREAD_SHOT_ANGLE, SPREAD_WEAPON_SHOT_SPEED)
+            self.spawn_shot(0, SPREAD_WEAPON_SHOT_SPEED)
+            self.spawn_shot(SPREAD_SHOT_ANGLE, SPREAD_WEAPON_SHOT_SPEED)
+            return
+
+        if self.current_weapon == WEAPON_RAPID:
+            self.spawn_shot(0, RAPID_WEAPON_SHOT_SPEED)
+            return
+
+        self.spawn_shot(0, NORMAL_WEAPON_SHOT_SPEED)
 
     def update(self, dt):
         keys = pygame.key.get_pressed()
@@ -162,6 +199,14 @@ class Player(CircleShape):
             self.accelerate(self.get_current_acceleration(), dt)
         if keys[pygame.K_s]:
             self.accelerate(-PLAYER_REVERSE_ACCELERATION, dt)
+
+        if keys[pygame.K_1]:
+            self.switch_weapon(WEAPON_NORMAL)
+        if keys[pygame.K_2]:
+            self.switch_weapon(WEAPON_SPREAD)
+        if keys[pygame.K_3]:
+            self.switch_weapon(WEAPON_RAPID)
+
         if keys[pygame.K_SPACE]:
             self.shoot()
 
