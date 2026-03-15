@@ -1,5 +1,6 @@
 import pygame
 import sys
+from asset_utils import load_image_with_aspect_ratio
 from logger import log_state, log_event
 from constants import (
     SCREEN_WIDTH,
@@ -60,12 +61,11 @@ def draw_lives(screen, font, lives):
 
 def load_weapon_icon(icon_path):
     try:
-        icon = pygame.image.load(icon_path).convert_alpha()
-        icon = pygame.transform.smoothscale(
-            icon,
-            (WEAPON_ICON_WIDTH, WEAPON_ICON_HEIGHT),
+        return load_image_with_aspect_ratio(
+            icon_path,
+            WEAPON_ICON_WIDTH,
+            WEAPON_ICON_HEIGHT,
         )
-        return icon
     except (pygame.error, FileNotFoundError):
         return None
 
@@ -93,7 +93,7 @@ def draw_weapon(screen, font, player, weapon_icons):
         return
 
     icon_x = WEAPON_POSITION_X + weapon_surface.get_width() + WEAPON_ICON_SPACING
-    icon_y = WEAPON_POSITION_Y + (weapon_surface.get_height() - WEAPON_ICON_HEIGHT) / 2
+    icon_y = WEAPON_POSITION_Y + (weapon_surface.get_height() - weapon_icon.get_height()) / 2
     screen.blit(weapon_icon, (icon_x, icon_y))
 
 def load_bomb_hud_image():
@@ -101,12 +101,11 @@ def load_bomb_hud_image():
         return None
 
     try:
-        bomb_image = pygame.image.load(BOMB_HUD_IMAGE_PATH).convert_alpha()
-        bomb_image = pygame.transform.smoothscale(
-            bomb_image,
-            (BOMB_HUD_IMAGE_WIDTH, BOMB_HUD_IMAGE_HEIGHT),
+        return load_image_with_aspect_ratio(
+            BOMB_HUD_IMAGE_PATH,
+            BOMB_HUD_IMAGE_WIDTH,
+            BOMB_HUD_IMAGE_HEIGHT,
         )
-        return bomb_image
     except (pygame.error, FileNotFoundError):
         return None
 
@@ -120,13 +119,13 @@ def draw_bombs(screen, font, bombs, bomb_image):
 
     text_width = bombs_surface.get_width()
     image_x = BOMBS_POSITION_X + text_width + BOMB_HUD_IMAGE_SPACING
-    image_y = BOMBS_POSITION_Y + (bombs_surface.get_height() - BOMB_HUD_IMAGE_HEIGHT) / 2
+    image_y = BOMBS_POSITION_Y + (bombs_surface.get_height() - bomb_image.get_height()) / 2
 
     for bomb_index in range(bombs):
         screen.blit(
             bomb_image,
             (
-                image_x + bomb_index * (BOMB_HUD_IMAGE_WIDTH + BOMB_HUD_IMAGE_SPACING),
+                image_x + bomb_index * (bomb_image.get_width() + BOMB_HUD_IMAGE_SPACING),
                 image_y,
             ),
         )

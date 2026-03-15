@@ -32,6 +32,7 @@ from constants import (
     RAPID_WEAPON_SHOT_SPEED,
 )
 import pygame
+from asset_utils import load_image_with_aspect_ratio
 from shot import Shot
 
 class Player(CircleShape):
@@ -52,12 +53,11 @@ class Player(CircleShape):
             return None
 
         try:
-            player_image = pygame.image.load(PLAYER_IMAGE_PATH).convert_alpha()
-            player_image = pygame.transform.smoothscale(
-                player_image,
-                (PLAYER_IMAGE_WIDTH, PLAYER_IMAGE_HEIGHT),
+            return load_image_with_aspect_ratio(
+                PLAYER_IMAGE_PATH,
+                PLAYER_IMAGE_WIDTH,
+                PLAYER_IMAGE_HEIGHT,
             )
-            return player_image
         except (pygame.error, FileNotFoundError):
             return None
    
