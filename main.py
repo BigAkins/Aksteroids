@@ -1,7 +1,10 @@
+import sys
+from pathlib import Path
+
 import pygame
 from audio_manager import AudioManager
 import random
-from asset_utils import load_image_with_aspect_ratio
+from asset_utils import load_image_with_aspect_ratio, resource_path
 from logger import log_state, log_event
 from constants import (
     SCREEN_WIDTH,
@@ -259,12 +262,26 @@ def draw_bombs(screen, font, bombs, bomb_image, offset_x: float = 0, offset_y: f
         )
 
 
+
+
+def get_user_data_path(filename: str) -> Path:
+    if sys.platform == "darwin":
+        base_dir = Path.home() / "Library" / "Application Support" / "Aksteroids"
+    elif sys.platform == "win32":
+        base_dir = Path.home() / "AppData" / "Roaming" / "Aksteroids"
+    else:
+        base_dir = Path.home() / ".local" / "share" / "Aksteroids"
+
+    base_dir.mkdir(parents=True, exist_ok=True)
+    return base_dir / filename
+
+
 def load_background():
     if not USE_BACKGROUND_IMAGE:
         return None
 
     try:
-        background = pygame.image.load(BACKGROUND_IMAGE_PATH).convert()
+        background = pygame.image.load(resource_path(BACKGROUND_IMAGE_PATH)).convert()
         background = pygame.transform.scale(background, (SCREEN_WIDTH, SCREEN_HEIGHT))
         return background
     except (pygame.error, FileNotFoundError):
@@ -286,15 +303,17 @@ def load_screen_image(image_path, use_image, max_width, max_height):
 
 
 def load_high_score():
+    high_score_path = get_user_data_path(HIGH_SCORE_FILE_PATH)
     try:
-        with open(HIGH_SCORE_FILE_PATH, "r", encoding="utf-8") as high_score_file:
+        with open(high_score_path, "r", encoding="utf-8") as high_score_file:
             return int(high_score_file.read().strip())
     except (FileNotFoundError, ValueError):
         return 0
 
 
 def save_high_score(high_score):
-    with open(HIGH_SCORE_FILE_PATH, "w", encoding="utf-8") as high_score_file:
+    high_score_path = get_user_data_path(HIGH_SCORE_FILE_PATH)
+    with open(high_score_path, "w", encoding="utf-8") as high_score_file:
         high_score_file.write(str(high_score))
 
 

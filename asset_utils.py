@@ -1,8 +1,23 @@
+import sys
+from pathlib import Path
+
 import pygame
 
 
+def get_project_root() -> Path:
+    return Path(__file__).resolve().parent
+
+
+def resource_path(relative_path: str) -> str:
+    meipass = getattr(sys, "_MEIPASS", None)
+    if isinstance(meipass, str):
+        return str(Path(meipass) / relative_path)
+
+    return str(get_project_root() / relative_path)
+
+
 def load_image_with_aspect_ratio(image_path, max_width, max_height):
-    image = pygame.image.load(image_path).convert_alpha()
+    image = pygame.image.load(resource_path(image_path)).convert_alpha()
 
     original_width = image.get_width()
     original_height = image.get_height()

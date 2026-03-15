@@ -1,5 +1,6 @@
 import pygame
 
+from asset_utils import resource_path
 from constants import (
     AUDIO_ENABLED,
     MUSIC_ENABLED,
@@ -13,6 +14,7 @@ class AudioManager:
         self.audio_available = False
         self.sounds = {}
         self.current_music_path = None
+        self.music_paused = False
 
         if not AUDIO_ENABLED:
             return
@@ -30,7 +32,7 @@ class AudioManager:
             return
 
         try:
-            sound = pygame.mixer.Sound(path)
+            sound = pygame.mixer.Sound(resource_path(path))
             sound.set_volume(SOUND_VOLUME)
             self.sounds[name] = sound
         except (pygame.error, FileNotFoundError):
@@ -48,26 +50,35 @@ class AudioManager:
         if not self.audio_available or not MUSIC_ENABLED:
             return
 
-        if not force_restart and self.current_music_path == music_path:
+        if (
+            not force_restart
+            and self.current_music_path == music_path
+            and not self.music_paused
+        ):
             return
 
         try:
-            pygame.mixer.music.load(music_path)
+            pygame.mixer.music.load(resource_path(music_path))
             pygame.mixer.music.set_volume(MUSIC_VOLUME)
             pygame.mixer.music.play(-1 if loop else 0)
             self.current_music_path = music_path
+            self.music_paused = False
         except (pygame.error, FileNotFoundError):
-            pass
+            self.current_music_path = None
+            self.music_paused = False
 
     def stop_music(self):
         if self.audio_available and MUSIC_ENABLED:
             pygame.mixer.music.stop()
             self.current_music_path = None
+            self.music_paused = False
 
     def pause_music(self):
-        if self.audio_available and MUSIC_ENABLED:
+        if self.audio_available and MUSIC_ENABLED and not self.music_paused:
             pygame.mixer.music.pause()
+            self.music_paused = True
 
     def unpause_music(self):
-        if self.audio_available and MUSIC_ENABLED:
+        if self.audio_available and MUSIC_ENABLED and self.music_paused:
             pygame.mixer.music.unpause()
+            self.music_paused = False
