@@ -1,5 +1,4 @@
 import pygame
-import sys
 from asset_utils import load_image_with_aspect_ratio
 from logger import log_state, log_event
 from constants import (
@@ -41,6 +40,17 @@ from constants import (
     WEAPON_NORMAL_ICON_PATH,
     WEAPON_SPREAD_ICON_PATH,
     WEAPON_RAPID_ICON_PATH,
+    GAME_STATE_START,
+    GAME_STATE_PLAYING,
+    GAME_STATE_GAME_OVER,
+    SCREEN_TITLE_FONT_SIZE,
+    SCREEN_SUBTITLE_FONT_SIZE,
+    SCREEN_TEXT_COLOR,
+    SCREEN_OVERLAY_COLOR,
+    SCREEN_TITLE_Y,
+    SCREEN_SUBTITLE_Y,
+    SCREEN_INSTRUCTION_Y,
+    SCREEN_SECONDARY_INSTRUCTION_Y,
 )
 from player import Player
 from aksteroidfield import AksteroidField
@@ -50,9 +60,11 @@ from explosion import Explosion
 from speedpowerup import SpeedPowerUp
 from shieldpowerup import ShieldPowerUp
 
+
 def draw_score(screen, font, score):
     score_surface = font.render(f"Score: {score}", True, SCORE_COLOR)
     screen.blit(score_surface, (SCORE_POSITION_X, SCORE_POSITION_Y))
+
 
 def draw_lives(screen, font, lives):
     lives_surface = font.render(f"Lives: {lives}", True, SCORE_COLOR)
@@ -70,7 +82,6 @@ def load_weapon_icon(icon_path):
         return None
 
 
-
 def load_weapon_icons():
     if not USE_WEAPON_ICONS:
         return {}
@@ -80,7 +91,6 @@ def load_weapon_icons():
         WEAPON_SPREAD: load_weapon_icon(WEAPON_SPREAD_ICON_PATH),
         WEAPON_RAPID: load_weapon_icon(WEAPON_RAPID_ICON_PATH),
     }
-
 
 
 def draw_weapon(screen, font, player, weapon_icons):
@@ -95,6 +105,7 @@ def draw_weapon(screen, font, player, weapon_icons):
     icon_x = WEAPON_POSITION_X + weapon_surface.get_width() + WEAPON_ICON_SPACING
     icon_y = WEAPON_POSITION_Y + (weapon_surface.get_height() - weapon_icon.get_height()) / 2
     screen.blit(weapon_icon, (icon_x, icon_y))
+
 
 def load_bomb_hud_image():
     if not USE_BOMB_HUD_IMAGE:
@@ -130,6 +141,7 @@ def draw_bombs(screen, font, bombs, bomb_image):
             ),
         )
 
+
 def load_background():
     if not USE_BACKGROUND_IMAGE:
         return None
@@ -142,16 +154,109 @@ def load_background():
         return None
 
 
+def draw_centered_text(screen, font, text, y, color):
+    text_surface = font.render(text, True, color)
+    text_rect = text_surface.get_rect(center=(SCREEN_WIDTH / 2, y))
+    screen.blit(text_surface, text_rect)
+
+
+def draw_overlay(screen):
+    overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
+    overlay.fill(SCREEN_OVERLAY_COLOR)
+    screen.blit(overlay, (0, 0))
+
+
+def draw_start_screen(screen, title_font, subtitle_font):
+    draw_overlay(screen)
+    draw_centered_text(screen, title_font, "AKSTEROIDS", SCREEN_TITLE_Y, SCREEN_TEXT_COLOR)
+    draw_centered_text(
+        screen,
+        subtitle_font,
+        "Press ENTER to Start",
+        SCREEN_SUBTITLE_Y,
+        SCREEN_TEXT_COLOR,
+    )
+    draw_centered_text(
+        screen,
+        subtitle_font,
+        "Press Q to Quit",
+        SCREEN_INSTRUCTION_Y,
+        SCREEN_TEXT_COLOR,
+    )
+
+
+def draw_game_over_screen(screen, title_font, subtitle_font, score):
+    draw_overlay(screen)
+    draw_centered_text(screen, title_font, "GAME OVER", SCREEN_TITLE_Y, SCREEN_TEXT_COLOR)
+    draw_centered_text(
+        screen,
+        subtitle_font,
+        f"Final Score: {score}",
+        SCREEN_SUBTITLE_Y,
+        SCREEN_TEXT_COLOR,
+    )
+    draw_centered_text(
+        screen,
+        subtitle_font,
+        "Press R to Restart",
+        SCREEN_INSTRUCTION_Y,
+        SCREEN_TEXT_COLOR,
+    )
+    draw_centered_text(
+        screen,
+        subtitle_font,
+        "Press Q to Quit",
+        SCREEN_SECONDARY_INSTRUCTION_Y,
+        SCREEN_TEXT_COLOR,
+    )
+
+
+def reset_game(
+    updatable,
+    drawable,
+    aksteroids,
+    shots,
+    explosions,
+    speed_powerups,
+    shield_powerups,
+):
+    updatable.empty()
+    drawable.empty()
+    aksteroids.empty()
+    shots.empty()
+    explosions.empty()
+    speed_powerups.empty()
+    shield_powerups.empty()
+
+    AksteroidField.containers = (updatable,)
+    Aksteroid.containers = (aksteroids, updatable, drawable)
+    Shot.containers = (shots, updatable, drawable)
+    Explosion.containers = (explosions, updatable, drawable)
+    SpeedPowerUp.containers = (speed_powerups, updatable, drawable)
+    ShieldPowerUp.containers = (shield_powerups, updatable, drawable)
+    Player.containers = (updatable, drawable)
+
+    _aksteroid_field = AksteroidField()
+    player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
+    SpeedPowerUp(SPEED_POWERUP_SPAWN_X, SPEED_POWERUP_SPAWN_Y)
+    ShieldPowerUp(SHIELD_POWERUP_SPAWN_X, SHIELD_POWERUP_SPAWN_Y)
+
+    score = 0
+    lives = PLAYER_STARTING_LIVES
+    respawn_invulnerability_timer = 0
+
+    return player, score, lives, respawn_invulnerability_timer
+
+
 def main():
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     clock = pygame.time.Clock()
     hud_font = pygame.font.Font(None, SCORE_FONT_SIZE)
+    title_font = pygame.font.Font(None, SCREEN_TITLE_FONT_SIZE)
+    subtitle_font = pygame.font.Font(None, SCREEN_SUBTITLE_FONT_SIZE)
     bomb_hud_image = load_bomb_hud_image()
     weapon_icons = load_weapon_icons()
-    score = 0
-    lives = PLAYER_STARTING_LIVES
-    respawn_invulnerability_timer = 0
     background = load_background()
     dt = 0
     print(f"Starting Aksteroids with pygame version: {pygame.version.ver}")
@@ -164,18 +269,17 @@ def main():
     explosions = pygame.sprite.Group()
     speed_powerups = pygame.sprite.Group()
     shield_powerups = pygame.sprite.Group()
-    AksteroidField.containers = (updatable,)
-    Aksteroid.containers = (aksteroids, updatable, drawable)
-    Shot.containers = (shots, updatable, drawable)
-    Explosion.containers = (explosions, updatable, drawable)
-    SpeedPowerUp.containers = (speed_powerups, updatable, drawable)
-    ShieldPowerUp.containers = (shield_powerups, updatable, drawable)
-    _aksteroid_field = AksteroidField()
 
-    Player.containers = (updatable, drawable)
-    player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
-    SpeedPowerUp(SPEED_POWERUP_SPAWN_X, SPEED_POWERUP_SPAWN_Y)
-    ShieldPowerUp(SHIELD_POWERUP_SPAWN_X, SHIELD_POWERUP_SPAWN_Y)
+    game_state = GAME_STATE_START
+    player, score, lives, respawn_invulnerability_timer = reset_game(
+        updatable,
+        drawable,
+        aksteroids,
+        shots,
+        explosions,
+        speed_powerups,
+        shield_powerups,
+    )
 
     while True:
         log_state()
@@ -183,11 +287,54 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return
-       
+
+            if event.type == pygame.KEYDOWN:
+                if game_state == GAME_STATE_START:
+                    if event.key == pygame.K_RETURN:
+                        player, score, lives, respawn_invulnerability_timer = reset_game(
+                            updatable,
+                            drawable,
+                            aksteroids,
+                            shots,
+                            explosions,
+                            speed_powerups,
+                            shield_powerups,
+                        )
+                        game_state = GAME_STATE_PLAYING
+                    elif event.key == pygame.K_q:
+                        return
+
+                elif game_state == GAME_STATE_GAME_OVER:
+                    if event.key == pygame.K_r:
+                        player, score, lives, respawn_invulnerability_timer = reset_game(
+                            updatable,
+                            drawable,
+                            aksteroids,
+                            shots,
+                            explosions,
+                            speed_powerups,
+                            shield_powerups,
+                        )
+                        game_state = GAME_STATE_PLAYING
+                    elif event.key == pygame.K_q:
+                        return
+
         if background is not None:
             screen.blit(background, (0, 0))
         else:
             screen.fill(BACKGROUND_COLOR)
+
+        if game_state == GAME_STATE_START:
+            draw_start_screen(screen, title_font, subtitle_font)
+            pygame.display.flip()
+            dt = clock.tick(60) / 1000
+            continue
+
+        if game_state != GAME_STATE_PLAYING:
+            draw_game_over_screen(screen, title_font, subtitle_font, score)
+            pygame.display.flip()
+            dt = clock.tick(60) / 1000
+            continue
 
         updatable.update(dt)
 
@@ -229,8 +376,8 @@ def main():
                 lives -= 1
 
                 if lives <= 0:
-                    print("Game over!")
-                    sys.exit()
+                    game_state = GAME_STATE_GAME_OVER
+                    break
 
                 player.reset()
                 respawn_invulnerability_timer = PLAYER_RESPAWN_INVULNERABILITY_SECONDS
@@ -260,7 +407,6 @@ def main():
 
         pygame.display.flip()
         dt = clock.tick(60) / 1000
-      
 
 
 if __name__ == "__main__":
