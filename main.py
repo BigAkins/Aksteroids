@@ -1,4 +1,5 @@
 import pygame
+import random
 from asset_utils import load_image_with_aspect_ratio
 from logger import log_state, log_event
 from constants import (
@@ -16,10 +17,10 @@ from constants import (
     PLAYER_RESPAWN_INVULNERABILITY_SECONDS,
     LIVES_POSITION_X,
     LIVES_POSITION_Y,
-    SPEED_POWERUP_SPAWN_X,
-    SPEED_POWERUP_SPAWN_Y,
-    SHIELD_POWERUP_SPAWN_X,
-    SHIELD_POWERUP_SPAWN_Y,
+    # SPEED_POWERUP_SPAWN_X,
+    # SPEED_POWERUP_SPAWN_Y,
+    # SHIELD_POWERUP_SPAWN_X,
+    # SHIELD_POWERUP_SPAWN_Y,
     BOMB_SCORE_PER_AKSTEROID,
     BOMBS_POSITION_X,
     BOMBS_POSITION_Y,
@@ -89,6 +90,14 @@ from shieldpowerup import ShieldPowerUp
 # --- Outlined text constants and helpers ---
 TEXT_OUTLINE_COLOR = (10, 10, 25)
 TEXT_OUTLINE_THICKNESS = 3
+
+# --- Power-up spawn configuration ---
+POWERUP_SPAWN_INTERVAL_MIN_SECONDS = 6.0
+POWERUP_SPAWN_INTERVAL_MAX_SECONDS = 12.0
+POWERUP_MAX_ACTIVE = 3
+POWERUP_SPAWN_MARGIN = 120
+POWERUP_SPEED_WEIGHT = 0.5
+POWERUP_SHIELD_WEIGHT = 0.5
 
 
 def create_game_font(size):
@@ -265,6 +274,44 @@ def load_high_score():
 def save_high_score(high_score):
     with open(HIGH_SCORE_FILE_PATH, "w", encoding="utf-8") as high_score_file:
         high_score_file.write(str(high_score))
+
+
+# --- Power-up spawn helpers ---
+
+def get_next_powerup_spawn_time():
+    return random.uniform(
+        POWERUP_SPAWN_INTERVAL_MIN_SECONDS,
+        POWERUP_SPAWN_INTERVAL_MAX_SECONDS,
+    )
+
+
+def count_active_powerups(speed_powerups, shield_powerups):
+    return len(speed_powerups) + len(shield_powerups)
+
+
+def spawn_random_powerup(speed_powerups, shield_powerups):
+    if count_active_powerups(speed_powerups, shield_powerups) >= POWERUP_MAX_ACTIVE:
+        return
+
+    spawn_x = random.uniform(
+        POWERUP_SPAWN_MARGIN,
+        SCREEN_WIDTH - POWERUP_SPAWN_MARGIN,
+    )
+    spawn_y = random.uniform(
+        POWERUP_SPAWN_MARGIN,
+        SCREEN_HEIGHT - POWERUP_SPAWN_MARGIN,
+    )
+
+    powerup_type = random.choices(
+        ["speed", "shield"],
+        weights=[POWERUP_SPEED_WEIGHT, POWERUP_SHIELD_WEIGHT],
+        k=1,
+    )[0]
+
+    if powerup_type == "speed":
+        SpeedPowerUp(spawn_x, spawn_y)
+    else:
+        ShieldPowerUp(spawn_x, spawn_y)
 
 
 def draw_centered_text(screen, font, text, y, color):
@@ -504,8 +551,6 @@ def reset_game(
 
     _aksteroid_field = AksteroidField()
     player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
-    SpeedPowerUp(SPEED_POWERUP_SPAWN_X, SPEED_POWERUP_SPAWN_Y)
-    ShieldPowerUp(SHIELD_POWERUP_SPAWN_X, SHIELD_POWERUP_SPAWN_Y)
 
     score = 0
     lives = PLAYER_STARTING_LIVES
@@ -560,6 +605,7 @@ def main():
         speed_powerups,
         shield_powerups,
     )
+    powerup_spawn_timer = get_next_powerup_spawn_time()
 
     while True:
         log_state()
@@ -580,6 +626,7 @@ def main():
                             speed_powerups,
                             shield_powerups,
                         )
+                        powerup_spawn_timer = get_next_powerup_spawn_time()
                         game_state = GAME_STATE_PLAYING
                     elif event.key == pygame.K_i:
                         previous_game_state = game_state
@@ -614,6 +661,7 @@ def main():
                             speed_powerups,
                             shield_powerups,
                         )
+                        powerup_spawn_timer = get_next_powerup_spawn_time()
                         game_state = GAME_STATE_PLAYING
                     elif event.key == pygame.K_i:
                         previous_game_state = game_state
@@ -657,6 +705,11 @@ def main():
             continue
 
         updatable.update(dt)
+
+        powerup_spawn_timer -= dt
+        if powerup_spawn_timer <= 0:
+            spawn_random_powerup(speed_powerups, shield_powerups)
+            powerup_spawn_timer = get_next_powerup_spawn_time()
 
         for speed_powerup in speed_powerups:
             if speed_powerup.collides_with(player):

@@ -1,4 +1,5 @@
 import pygame
+import random
 from asset_utils import load_image_with_aspect_ratio
 
 from circleshape import CircleShape
@@ -10,6 +11,8 @@ from constants import (
     USE_SHIELD_POWERUP_IMAGE,
     SHIELD_POWERUP_IMAGE_WIDTH,
     SHIELD_POWERUP_IMAGE_HEIGHT,
+    POWERUP_DRIFT_SPEED_MIN,
+    POWERUP_DRIFT_SPEED_MAX,
 )
 
 
@@ -17,6 +20,13 @@ class ShieldPowerUp(CircleShape):
     def __init__(self, x, y):
         super().__init__(x, y, SHIELD_POWERUP_RADIUS)
         self.image = self.load_image()
+
+        angle = random.uniform(0, 360)
+        drift_speed = random.uniform(
+            POWERUP_DRIFT_SPEED_MIN,
+            POWERUP_DRIFT_SPEED_MAX,
+        )
+        self.velocity = pygame.Vector2(1, 0).rotate(angle) * drift_speed
 
     def load_image(self):
         if not USE_SHIELD_POWERUP_IMAGE:
@@ -46,4 +56,5 @@ class ShieldPowerUp(CircleShape):
         )
 
     def update(self, dt):
-        pass
+        self.position += self.velocity * dt
+        self.wrap_position()
